@@ -1,0 +1,2440 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Univlox — Event Organizer & Music Promoter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── RESET & BASE ──────────────────────────────────── */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg:        #07070f;
+      --surface:   #0f0f1e;
+      --surface2:  #13132a;
+      --purple:    #7c3aed;
+      --purple-l:  #a855f7;
+      --purple-d:  #4c1d95;
+      --blue:      #2563eb;
+      --blue-l:    #60a5fa;
+      --yellow:    #f59e0b;
+      --yellow-l:  #fde68a;
+      --text:      #f0eeff;
+      --muted:     #8884a8;
+      --border:    rgba(124,58,237,0.2);
+
+      --grad-main: linear-gradient(135deg, #7c3aed 0%, #2563eb 50%, #0ea5e9 100%);
+      --grad-warm: linear-gradient(135deg, #7c3aed 0%, #a855f7 40%, #f59e0b 100%);
+      --grad-hero: linear-gradient(160deg, #7c3aed 0%, #1e1b4b 40%, #07070f 70%);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    ::selection { background: var(--purple); color: #fff; }
+
+    /* ── SCROLLBAR ─────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--purple); border-radius: 2px; }
+
+    /* ── UTILS ─────────────────────────────────────────── */
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+    .section   { padding: 7rem 0; }
+    .tag {
+      display: inline-flex; align-items: center; gap: .5rem;
+      font-family: 'Space Mono', monospace;
+      font-size: .72rem; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--purple-l);
+      border: 1px solid rgba(168,85,247,.3);
+      border-radius: 999px; padding: .35rem 1rem;
+      margin-bottom: 1.2rem;
+    }
+    .tag::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--purple-l); display: block; }
+
+    .heading-xl {
+      font-size: clamp(2.4rem, 6vw, 5rem);
+      font-weight: 700; line-height: 1.08; letter-spacing: -.02em;
+    }
+    .heading-lg {
+      font-size: clamp(1.8rem, 4vw, 3.2rem);
+      font-weight: 700; line-height: 1.1; letter-spacing: -.015em;
+    }
+    .heading-md {
+      font-size: clamp(1.4rem, 3vw, 2.2rem);
+      font-weight: 600; line-height: 1.2;
+    }
+
+    .grad-text {
+      background: var(--grad-warm);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: .6rem;
+      padding: .85rem 2rem; border-radius: 8px; font-size: .95rem;
+      font-weight: 600; cursor: pointer; text-decoration: none;
+      transition: all .25s;
+    }
+    .btn-primary {
+      background: var(--grad-main);
+      color: #fff;
+      box-shadow: 0 0 30px rgba(124,58,237,.4);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 50px rgba(124,58,237,.6);
+    }
+    .btn-outline {
+      border: 1px solid rgba(168,85,247,.5);
+      color: var(--purple-l);
+      background: transparent;
+    }
+    .btn-outline:hover {
+      background: rgba(124,58,237,.15);
+      border-color: var(--purple-l);
+    }
+
+    /* ── NOISE OVERLAY ─────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      opacity: .025;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    }
+
+    /* ── NAV ───────────────────────────────────────────── */
+    #navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 1.2rem 0;
+      transition: background .3s, backdrop-filter .3s, border-bottom .3s;
+    }
+    #navbar.scrolled {
+      background: rgba(7,7,15,.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo {
+      font-family: 'Space Mono', monospace;
+      font-size: 1.4rem; font-weight: 700;
+      letter-spacing: -.02em; text-decoration: none;
+      background: var(--grad-warm);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .nav-links {
+      display: flex; gap: 2.5rem; list-style: none;
+    }
+    .nav-links a {
+      color: var(--muted); text-decoration: none;
+      font-size: .9rem; font-weight: 500;
+      transition: color .2s;
+      position: relative;
+    }
+    .nav-links a::after {
+      content: '';
+      position: absolute; left: 0; bottom: -4px;
+      width: 0; height: 1px;
+      background: var(--purple-l);
+      transition: width .3s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a:hover::after { width: 100%; }
+
+    .nav-cta { display: flex; align-items: center; gap: 1rem; }
+
+    .hamburger {
+      display: none; flex-direction: column; gap: 5px;
+      cursor: pointer; padding: .5rem;
+    }
+    .hamburger span {
+      display: block; width: 24px; height: 2px;
+      background: var(--text); border-radius: 2px;
+      transition: all .3s;
+    }
+
+    /* ── HERO ──────────────────────────────────────────── */
+    #hero {
+      min-height: 100vh;
+      min-height: 100svh;
+      position: relative;
+      display: flex; align-items: center;
+      overflow: hidden;
+      padding-top: 80px;
+    }
+
+    .hero-bg {
+      position: absolute; inset: 0; z-index: 0;
+    }
+    .hero-glow-1 {
+      position: absolute;
+      width: 700px; height: 700px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(124,58,237,.35) 0%, transparent 65%);
+      top: -200px; left: -150px;
+    }
+    .hero-glow-2 {
+      position: absolute;
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(37,99,235,.3) 0%, transparent 65%);
+      bottom: -100px; right: -100px;
+    }
+    .hero-glow-3 {
+      position: absolute;
+      width: 400px; height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(245,158,11,.15) 0%, transparent 65%);
+      top: 40%; right: 20%;
+    }
+
+    /* Parallax grid lines */
+    .hero-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(124,58,237,.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124,58,237,.06) 1px, transparent 1px);
+      background-size: 80px 80px;
+      transform-style: preserve-3d;
+    }
+
+    /* Floating orbs */
+    .orb {
+      position: absolute; border-radius: 50%;
+      background: var(--grad-main);
+      opacity: .12; filter: blur(1px);
+    }
+    .orb-1 { width: 8px; height: 8px; top: 20%; left: 15%; animation: float1 6s ease-in-out infinite; }
+    .orb-2 { width: 12px; height: 12px; top: 60%; left: 80%; animation: float2 8s ease-in-out infinite; }
+    .orb-3 { width: 6px; height: 6px; top: 80%; left: 30%; animation: float1 5s ease-in-out infinite .5s; }
+    .orb-4 { width: 16px; height: 16px; top: 30%; right: 10%; animation: float3 9s ease-in-out infinite 1s; }
+
+    @keyframes float1 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
+    @keyframes float2 { 0%,100%{transform:translateY(0) translateX(0)} 50%{transform:translateY(-15px) translateX(10px)} }
+    @keyframes float3 { 0%,100%{transform:translateY(0) rotate(0)} 50%{transform:translateY(-25px) rotate(180deg)} }
+
+    .hero-content {
+      position: relative; z-index: 2;
+      max-width: 900px;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: .6rem;
+      font-family: 'Space Mono', monospace; font-size: .75rem;
+      letter-spacing: .15em; text-transform: uppercase;
+      color: var(--yellow-l);
+      border: 1px solid rgba(245,158,11,.3);
+      border-radius: 999px; padding: .4rem 1.2rem;
+      margin-bottom: 2rem;
+      animation: fadeUp .8s ease both;
+    }
+    .hero-badge-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--yellow);
+      box-shadow: 0 0 10px var(--yellow);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    .hero-title {
+      animation: fadeUp .8s ease .1s both;
+      margin-bottom: 1.5rem;
+    }
+    .hero-title span { display: block; }
+    .hero-sub {
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      color: var(--muted); max-width: 580px;
+      line-height: 1.7;
+      animation: fadeUp .8s ease .2s both;
+      margin-bottom: 2.5rem;
+    }
+    .hero-actions {
+      display: flex; gap: 1rem; flex-wrap: wrap;
+      animation: fadeUp .8s ease .3s both;
+    }
+
+    .hero-scroll {
+      position: absolute; bottom: 2.5rem; left: 50%;
+      transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: .5rem;
+      color: var(--muted); font-size: .75rem;
+      font-family: 'Space Mono', monospace;
+      letter-spacing: .1em; text-transform: uppercase;
+      animation: fadeIn 1s ease 1s both;
+      cursor: pointer;
+    }
+    .scroll-line {
+      width: 1px; height: 50px;
+      background: linear-gradient(to bottom, var(--purple-l), transparent);
+      animation: scrollLine 2s ease-in-out infinite;
+    }
+    @keyframes scrollLine { 0%{opacity:0;transform:scaleY(0) translateY(-50%)} 50%{opacity:1} 100%{opacity:0;transform:scaleY(1) translateY(50%)} }
+
+    @keyframes fadeUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+    /* ── MARQUEE STRIP ─────────────────────────────────── */
+    .marquee-section {
+      padding: 1.5rem 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+      background: var(--surface);
+    }
+    .marquee-track {
+      display: flex; gap: 3rem; width: max-content;
+      animation: marquee 45s linear infinite;
+    }
+    .marquee-item {
+      display: flex; align-items: center; gap: .8rem;
+      white-space: nowrap;
+      font-family: 'Space Mono', monospace;
+      font-size: .8rem; letter-spacing: .08em;
+      color: var(--muted);
+    }
+    .marquee-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--purple-l); }
+    @keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+    /* ── ABOUT ─────────────────────────────────────────── */
+    #about { background: var(--surface); position: relative; overflow: hidden; }
+    .about-glow {
+      position: absolute; width: 500px; height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(124,58,237,.12) 0%, transparent 65%);
+      right: -100px; top: 50%; transform: translateY(-50%);
+    }
+    .about-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 5rem; align-items: center;
+    }
+    .about-visual {
+      position: relative;
+    }
+    .about-img-wrap {
+      position: relative;
+      border-radius: 16px; overflow: hidden;
+      aspect-ratio: 4/5;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+    }
+    .about-img-placeholder {
+      width: 100%; height: 100%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 1rem;
+      color: var(--muted); font-size: .9rem;
+    }
+    .about-img-placeholder svg { width: 48px; height: 48px; opacity: .3; }
+
+    .about-badge-float {
+      position: absolute;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: .8rem 1.2rem;
+      backdrop-filter: blur(10px);
+    }
+    .about-badge-float.left {
+      bottom: 2rem; left: -2rem;
+    }
+    .about-badge-float.top {
+      top: 2rem; right: -1.5rem;
+    }
+    .badge-num {
+      font-family: 'Space Mono', monospace;
+      font-size: 1.5rem; font-weight: 700;
+      background: var(--grad-warm);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .badge-label { font-size: .75rem; color: var(--muted); }
+
+    .about-text p {
+      color: var(--muted); line-height: 1.8; font-size: 1.02rem;
+      margin-bottom: 1.2rem;
+    }
+    .about-highlights {
+      display: flex; gap: 2rem; margin-top: 2.5rem; flex-wrap: wrap;
+    }
+    .highlight-item { display: flex; flex-direction: column; gap: .2rem; }
+    .highlight-num {
+      font-family: 'Space Mono', monospace;
+      font-size: 1.8rem; font-weight: 700;
+      background: var(--grad-main);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .highlight-label { font-size: .8rem; color: var(--muted); }
+
+    /* ── GIRL BEHIND ──────────────────────────────────── */
+    #girl-behind {
+      background: var(--surface);
+      position: relative; overflow: hidden;
+    }
+    .girl-behind-glow {
+      position: absolute; width: 600px; height: 600px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(168,85,247,.12) 0%, transparent 65%);
+      left: -150px; top: 50%; transform: translateY(-50%);
+      pointer-events: none;
+    }
+    .girl-behind-grid {
+      display: grid; grid-template-columns: 420px 1fr;
+      gap: 5rem; align-items: center;
+    }
+
+    /* Photo card */
+    .girl-photo-wrap {
+      position: relative;
+    }
+    .girl-photo-frame {
+      border-radius: 20px; overflow: hidden;
+      aspect-ratio: 3/4;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      position: relative;
+    }
+    .girl-photo-placeholder {
+      width: 100%; height: 100%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 1rem;
+      background: linear-gradient(160deg, rgba(124,58,237,.12) 0%, rgba(168,85,247,.06) 100%);
+      color: var(--muted); font-size: .9rem;
+    }
+    .girl-photo-placeholder svg { width: 52px; height: 52px; opacity: .25; }
+    .girl-photo-frame img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+
+    /* Floating experience badge */
+    .girl-exp-badge {
+      position: absolute; bottom: -1.5rem; right: -1.5rem;
+      background: var(--surface);
+      border: 1px solid rgba(124,58,237,.35);
+      border-radius: 16px;
+      padding: 1.1rem 1.5rem;
+      backdrop-filter: blur(10px);
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0,0,0,.4);
+    }
+    .girl-exp-num {
+      font-family: 'Space Mono', monospace;
+      font-size: 2.2rem; font-weight: 700; line-height: 1;
+      background: var(--grad-warm);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .girl-exp-label { font-size: .78rem; color: var(--muted); margin-top: .2rem; }
+
+    /* Content side */
+    .girl-content .girl-name {
+      font-size: clamp(2rem, 4vw, 2.8rem);
+      font-weight: 700; line-height: 1.1; letter-spacing: -.02em;
+      margin-bottom: .5rem; margin-top: .8rem;
+    }
+    .girl-content .girl-tagline {
+      font-size: 1rem; color: var(--muted); line-height: 1.7;
+      margin-bottom: 2rem;
+    }
+
+    /* Role pills */
+    .girl-roles {
+      display: flex; flex-wrap: wrap; gap: .75rem;
+      margin-bottom: 2.2rem;
+    }
+    .girl-role-pill {
+      display: flex; align-items: center; gap: .5rem;
+      padding: .55rem 1.1rem;
+      border-radius: 999px;
+      background: rgba(124,58,237,.1);
+      border: 1px solid rgba(124,58,237,.3);
+      font-size: .88rem; font-weight: 500;
+    }
+    .girl-role-pill span { font-size: 1rem; }
+
+    /* Timeline-style highlights */
+    .girl-timeline { display: flex; flex-direction: column; gap: 1rem; }
+    .girl-timeline-item {
+      display: flex; gap: 1rem; align-items: flex-start;
+      padding: 1rem 1.2rem;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      transition: all .3s;
+    }
+    .girl-timeline-item:hover {
+      background: var(--surface2);
+      border-color: var(--border);
+    }
+    .girl-timeline-icon {
+      width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+      background: rgba(124,58,237,.15);
+      border: 1px solid rgba(124,58,237,.25);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+    }
+    .girl-timeline-title { font-size: .95rem; font-weight: 600; margin-bottom: .2rem; }
+    .girl-timeline-desc  { font-size: .85rem; color: var(--muted); line-height: 1.5; }
+
+    @media (max-width: 1024px) {
+      .girl-behind-grid { grid-template-columns: 1fr; gap: 3.5rem; }
+      .girl-photo-wrap  { max-width: 360px; margin: 0 auto; }
+    }
+    @media (max-width: 480px) {
+      .girl-exp-badge { right: 0; bottom: -1rem; }
+    }
+
+    /* ── VIDEO SHOWCASE ───────────────────────────────── */
+    #video-showcase {
+      background: var(--bg);
+      padding: 7rem 0;
+      position: relative; overflow: hidden;
+    }
+    .video-showcase-glow {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 50%, rgba(124,58,237,.1) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .video-showcase-header {
+      text-align: center; max-width: 650px; margin: 0 auto 3.5rem;
+    }
+    .video-showcase-header p {
+      color: var(--muted); font-size: 1.05rem; line-height: 1.7; margin-top: 1rem;
+    }
+
+    .video-wrapper {
+      position: relative;
+      border-radius: 20px; overflow: hidden;
+      border: 1px solid rgba(124,58,237,.25);
+      box-shadow: 0 40px 100px rgba(0,0,0,.6), 0 0 60px rgba(124,58,237,.12);
+      aspect-ratio: 16/9;
+      background: #000;
+      cursor: pointer;
+    }
+
+    /* Actual video element */
+    .video-wrapper video {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Overlay saat belum / pause */
+    .video-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(7,7,15,.55) 0%, rgba(76,29,149,.3) 100%);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      transition: opacity .4s;
+    }
+    .video-wrapper.playing .video-overlay {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .video-play-btn {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: rgba(255,255,255,.12);
+      border: 2px solid rgba(255,255,255,.35);
+      backdrop-filter: blur(12px);
+      display: flex; align-items: center; justify-content: center;
+      transition: transform .3s, background .3s, border-color .3s;
+    }
+    .video-play-btn svg {
+      width: 28px; height: 28px; fill: #fff;
+      margin-left: 4px;
+    }
+    .video-wrapper:hover .video-play-btn {
+      transform: scale(1.12);
+      background: rgba(124,58,237,.55);
+      border-color: var(--purple-l);
+    }
+    .video-overlay-label {
+      margin-top: 1.2rem;
+      font-family: 'Space Mono', monospace;
+      font-size: .75rem; letter-spacing: .15em; text-transform: uppercase;
+      color: rgba(255,255,255,.6);
+    }
+
+    /* Corner badge */
+    .video-corner-badge {
+      position: absolute; top: 1.2rem; left: 1.2rem;
+      display: flex; align-items: center; gap: .5rem;
+      background: rgba(7,7,15,.7);
+      border: 1px solid rgba(124,58,237,.35);
+      backdrop-filter: blur(10px);
+      border-radius: 999px;
+      padding: .35rem .9rem;
+      font-family: 'Space Mono', monospace;
+      font-size: .7rem; letter-spacing: .1em;
+      color: var(--purple-l);
+      pointer-events: none;
+    }
+    .video-corner-badge-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #ef4444;
+      box-shadow: 0 0 8px #ef4444;
+      animation: pulse 1.5s infinite;
+    }
+
+    /* Sound / mute toggle */
+    .video-sound-btn {
+      position: absolute; bottom: 1.2rem; right: 1.2rem;
+      width: 38px; height: 38px; border-radius: 50%;
+      background: rgba(7,7,15,.65);
+      border: 1px solid rgba(255,255,255,.15);
+      backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all .2s;
+      font-size: 1rem;
+    }
+    .video-sound-btn:hover {
+      background: rgba(124,58,237,.4);
+      border-color: var(--purple-l);
+    }
+
+    /* Progress bar */
+    .video-progress {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      height: 3px;
+      background: rgba(255,255,255,.1);
+    }
+    .video-progress-fill {
+      height: 100%;
+      background: var(--grad-main);
+      width: 0%;
+      transition: width .1s linear;
+    }
+
+    @media (max-width: 768px) {
+      .video-play-btn { width: 64px; height: 64px; }
+      .video-play-btn svg { width: 22px; height: 22px; }
+      .video-stats { gap: 1.5rem; }
+    }
+
+    /* ── SERVICES ──────────────────────────────────────── */
+    #services { background: var(--bg); position: relative; overflow: hidden; }
+    .services-header { text-align: center; max-width: 600px; margin: 0 auto 4rem; }
+    .services-header p { color: var(--muted); font-size: 1.05rem; line-height: 1.7; margin-top: 1rem; }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+    .service-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      position: relative; overflow: hidden;
+      transition: transform .3s, border-color .3s, box-shadow .3s;
+      cursor: default;
+    }
+    .service-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: var(--grad-main);
+      opacity: 0;
+      transition: opacity .3s;
+    }
+    .service-card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(124,58,237,.6);
+      box-shadow: 0 20px 60px rgba(124,58,237,.2);
+    }
+    .service-card:hover::before { opacity: .05; }
+
+    .service-card.featured {
+      grid-column: span 2;
+      background: linear-gradient(135deg, rgba(124,58,237,.15) 0%, rgba(37,99,235,.1) 100%);
+      border-color: rgba(124,58,237,.4);
+    }
+
+    .service-icon {
+      width: 52px; height: 52px;
+      border-radius: 12px;
+      background: rgba(124,58,237,.15);
+      border: 1px solid rgba(124,58,237,.3);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1.5rem;
+      font-size: 1.5rem;
+      position: relative; z-index: 1;
+    }
+    .service-card h3 {
+      font-size: 1.15rem; font-weight: 600;
+      margin-bottom: .7rem;
+      position: relative; z-index: 1;
+    }
+    .service-card p {
+      color: var(--muted); font-size: .9rem;
+      line-height: 1.7;
+      position: relative; z-index: 1;
+    }
+    .service-tag-list {
+      display: flex; flex-wrap: wrap; gap: .5rem;
+      margin-top: 1.2rem;
+      position: relative; z-index: 1;
+    }
+    .service-tag {
+      font-size: .75rem; padding: .3rem .7rem;
+      border-radius: 999px;
+      border: 1px solid rgba(168,85,247,.25);
+      color: var(--purple-l);
+    }
+
+    /* ── PORTFOLIO ─────────────────────────────────────── */
+    #portfolio {
+      background: var(--surface);
+      position: relative; overflow: hidden;
+    }
+    .portfolio-glow {
+      position: absolute; width: 600px; height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(37,99,235,.1) 0%, transparent 65%);
+      top: 50%; left: 50%; transform: translate(-50%,-50%);
+      pointer-events: none;
+    }
+    .portfolio-header { text-align: center; margin-bottom: 4rem; }
+    .portfolio-header p { color: var(--muted); font-size: 1.05rem; margin-top: 1rem; }
+
+    .portfolio-filter {
+      display: flex; justify-content: center; gap: .75rem;
+      flex-wrap: wrap; margin-bottom: 3rem;
+    }
+    .filter-btn {
+      padding: .45rem 1.1rem;
+      border-radius: 999px; border: 1px solid var(--border);
+      background: transparent; color: var(--muted);
+      font-size: .85rem; font-family: 'Space Grotesk', sans-serif;
+      cursor: pointer; transition: all .2s;
+    }
+    .filter-btn.active, .filter-btn:hover {
+      background: rgba(124,58,237,.2);
+      border-color: var(--purple);
+      color: var(--purple-l);
+    }
+
+    .portfolio-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+    .portfolio-card {
+      border-radius: 14px; overflow: hidden;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      position: relative;
+      aspect-ratio: 4/3;
+      cursor: pointer;
+      transition: transform .3s, box-shadow .3s;
+    }
+    .portfolio-card:first-child { grid-column: span 2; aspect-ratio: 16/9; }
+    .portfolio-card:hover {
+      transform: scale(1.02);
+      box-shadow: 0 20px 60px rgba(0,0,0,.5);
+    }
+
+    .portfolio-placeholder {
+      width: 100%; height: 100%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: .5rem;
+      background: linear-gradient(135deg, var(--surface2) 0%, rgba(124,58,237,.08) 100%);
+    }
+    .portfolio-placeholder-icon { font-size: 2.5rem; opacity: .3; }
+
+    .portfolio-card-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(7,7,15,.95) 0%, transparent 60%);
+      padding: 1.2rem;
+      display: flex; flex-direction: column; justify-content: flex-end;
+      opacity: 0; transition: opacity .3s;
+    }
+    .portfolio-card:hover .portfolio-card-overlay { opacity: 1; }
+    @media (hover: none) {
+      .portfolio-card-overlay { opacity: 1; }
+    }
+    .portfolio-card-cat {
+      font-size: .72rem; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--purple-l); font-family: 'Space Mono', monospace;
+      margin-bottom: .4rem;
+    }
+    .portfolio-card-title { font-size: 1.05rem; font-weight: 600; }
+    .portfolio-card-info { font-size: .82rem; color: var(--muted); margin-top: .2rem; }
+
+    /* Always show on mobile-ish cards */
+    .portfolio-card-label {
+      position: absolute; top: 1rem; left: 1rem;
+      display: flex; flex-direction: column; gap: .15rem;
+    }
+
+    /* ── STATS ─────────────────────────────────────────── */
+    #stats {
+      background: var(--bg);
+      padding: 5rem 0;
+      position: relative; overflow: hidden;
+    }
+    .stats-glow {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 50%, rgba(124,58,237,.08) 0%, transparent 65%);
+    }
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden;
+    }
+    .stat-item {
+      background: var(--surface);
+      padding: 3rem 2rem; text-align: center;
+    }
+    .stat-num {
+      font-family: 'Space Mono', monospace;
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 700;
+      background: var(--grad-warm);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: block;
+    }
+    .stat-label { color: var(--muted); font-size: .9rem; margin-top: .5rem; }
+
+    /* ── WHY UNIVLOX ───────────────────────────────────── */
+    #why {
+      background: var(--surface);
+      position: relative; overflow: hidden;
+    }
+    .why-bg-text {
+      position: absolute; bottom: -2rem; right: -1rem;
+      font-size: clamp(5rem, 15vw, 12rem);
+      font-weight: 700; font-family: 'Space Mono', monospace;
+      color: rgba(124,58,237,.04);
+      pointer-events: none; user-select: none;
+      white-space: nowrap;
+    }
+    .why-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 5rem; align-items: center;
+    }
+    .why-list { display: flex; flex-direction: column; gap: 1.5rem; margin-top: 2.5rem; }
+    .why-item {
+      display: flex; gap: 1.2rem;
+      padding: 1.2rem;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      transition: all .3s;
+    }
+    .why-item:hover {
+      background: var(--surface2);
+      border-color: var(--border);
+    }
+    .why-icon {
+      width: 44px; height: 44px; border-radius: 10px; flex-shrink: 0;
+      background: rgba(124,58,237,.15);
+      border: 1px solid rgba(124,58,237,.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem;
+    }
+    .why-item h4 { font-size: 1rem; font-weight: 600; margin-bottom: .3rem; }
+    .why-item p { font-size: .88rem; color: var(--muted); line-height: 1.6; }
+
+    /* Why visual side */
+    .why-visual { position: relative; }
+    .why-card-stack { position: relative; }
+    .why-main-card {
+      background: linear-gradient(135deg, rgba(124,58,237,.2) 0%, rgba(37,99,235,.15) 100%);
+      border: 1px solid rgba(124,58,237,.3);
+      border-radius: 20px; padding: 2.5rem;
+      text-align: center;
+    }
+    .why-main-card .big-num {
+      font-family: 'Space Mono', monospace;
+      font-size: 5rem; font-weight: 700;
+      background: var(--grad-warm);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+    }
+    .why-main-card .big-label {
+      color: var(--text); font-size: 1.2rem; font-weight: 600; margin-top: .5rem;
+    }
+    .why-main-card .big-sub { color: var(--muted); font-size: .9rem; margin-top: .3rem; }
+
+    .why-side-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.2rem 1.5rem;
+      margin-top: 1rem;
+      display: flex; align-items: center; gap: 1rem;
+    }
+    .why-side-icon { font-size: 1.5rem; }
+    .why-side-title { font-size: .95rem; font-weight: 600; }
+    .why-side-sub { font-size: .8rem; color: var(--muted); }
+
+    /* ── TESTIMONIALS ──────────────────────────────────── */
+    #testimonials { background: var(--bg); overflow: hidden; }
+    .testimonials-header { text-align: center; margin-bottom: 4rem; }
+    .testimonials-header p { color: var(--muted); margin-top: 1rem; font-size: 1.05rem; }
+
+    .testimonials-track-wrap { overflow: hidden; position: relative; }
+    .testimonials-track-wrap::before,
+    .testimonials-track-wrap::after {
+      content: '';
+      position: absolute; top: 0; bottom: 0; z-index: 2;
+      width: 120px;
+      pointer-events: none;
+    }
+    .testimonials-track-wrap::before {
+      left: 0;
+      background: linear-gradient(to right, var(--bg), transparent);
+    }
+    .testimonials-track-wrap::after {
+      right: 0;
+      background: linear-gradient(to left, var(--bg), transparent);
+    }
+
+    .testimonials-track {
+      display: flex; gap: 1.5rem;
+      width: max-content;
+      animation: tscroll 30s linear infinite;
+    }
+    .testimonials-track:hover { animation-play-state: paused; }
+    @keyframes tscroll { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+    .testimonial-card {
+      width: 350px; flex-shrink: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.8rem;
+    }
+    .testimonial-stars { color: var(--yellow); font-size: 1rem; margin-bottom: 1rem; letter-spacing: .1em; }
+    .testimonial-text {
+      color: var(--text); font-size: .92rem; line-height: 1.7;
+      margin-bottom: 1.5rem;
+    }
+    .testimonial-author { display: flex; align-items: center; gap: .8rem; }
+    .testimonial-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--grad-main);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: .9rem; color: #fff; flex-shrink: 0;
+    }
+    .testimonial-name { font-weight: 600; font-size: .9rem; }
+    .testimonial-role { font-size: .78rem; color: var(--muted); }
+
+    /* ── CLIENT LOGOS ─────────────────────────────────── */
+    #clients {
+      background: var(--surface);
+      padding: 5rem 0;
+      border-top: 1px solid var(--border);
+    }
+    .clients-header { text-align: center; margin-bottom: 3rem; }
+    .clients-header p { color: var(--muted); font-size: .95rem; margin-top: .6rem; }
+
+    .clients-logo-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 1.5rem 2rem;
+    }
+    .client-logo-item {
+      display: flex; align-items: center; justify-content: center;
+      width: 150px; height: 70px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.2rem;
+      transition: all .3s;
+      cursor: default;
+    }
+    .client-logo-item:hover {
+      border-color: rgba(124,58,237,.5);
+      background: rgba(124,58,237,.07);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(124,58,237,.15);
+    }
+    .client-logo-item img {
+      max-width: 100%; max-height: 100%;
+      object-fit: contain;
+      filter: brightness(0) invert(1);
+      opacity: .5;
+      transition: opacity .3s;
+    }
+    .client-logo-item:hover img { opacity: .85; }
+
+    /* Placeholder style (saat belum ada logo) */
+    .client-logo-placeholder {
+      font-family: 'Space Mono', monospace;
+      font-size: .72rem; letter-spacing: .06em;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.3;
+      opacity: .5;
+    }
+    .client-logo-placeholder strong {
+      display: block;
+      font-size: .85rem;
+      color: var(--text);
+      opacity: .6;
+      margin-bottom: .1rem;
+    }
+
+    @media (max-width: 768px) {
+      .client-logo-item { width: 120px; height: 58px; }
+    }
+
+    /* ── CTA SECTION ───────────────────────────────────── */
+    #cta {
+      background: var(--surface);
+      position: relative; overflow: hidden;
+      padding: 7rem 0;
+    }
+    .cta-glow {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(124,58,237,.2) 0%, transparent 60%);
+    }
+    .cta-inner {
+      position: relative; z-index: 1;
+      text-align: center; max-width: 700px; margin: 0 auto;
+    }
+    .cta-inner p {
+      color: var(--muted); font-size: 1.1rem; line-height: 1.7;
+      margin: 1.5rem 0 2.5rem;
+    }
+    .cta-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+    /* ── CONTACT ───────────────────────────────────────── */
+    #contact { background: var(--bg); }
+    .contact-grid {
+      display: grid; grid-template-columns: 1fr 1.5fr; gap: 4rem;
+    }
+    .contact-info h3 { font-size: 1.2rem; font-weight: 600; margin-bottom: 2rem; }
+    .contact-item {
+      display: flex; gap: 1rem; align-items: flex-start;
+      margin-bottom: 1.5rem;
+    }
+    .contact-icon {
+      width: 42px; height: 42px; border-radius: 10px;
+      background: rgba(124,58,237,.15);
+      border: 1px solid rgba(124,58,237,.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; flex-shrink: 0;
+    }
+    .contact-item-label { font-size: .8rem; color: var(--muted); }
+    .contact-item-value { font-size: .95rem; font-weight: 500; }
+
+    .contact-social { display: flex; gap: .75rem; margin-top: 2rem; }
+    .social-btn {
+      width: 42px; height: 42px; border-radius: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      text-decoration: none; font-size: 1.1rem;
+      transition: all .2s;
+    }
+    .social-btn:hover {
+      background: rgba(124,58,237,.2);
+      border-color: var(--purple);
+      transform: translateY(-2px);
+    }
+
+    .contact-form { display: flex; flex-direction: column; gap: 1.2rem; }
+    .form-group { display: flex; flex-direction: column; gap: .4rem; }
+    .form-group label { font-size: .85rem; color: var(--muted); }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .85rem 1rem;
+      color: var(--text);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .95rem;
+      transition: border-color .2s, box-shadow .2s;
+      outline: none;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--purple);
+      box-shadow: 0 0 0 3px rgba(124,58,237,.15);
+    }
+    .form-group select option { background: var(--surface); color: var(--text); }
+    .form-group textarea { resize: vertical; min-height: 120px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+
+    /* ── FOOTER ────────────────────────────────────────── */
+    footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 3rem 0 2rem;
+    }
+    .footer-inner {
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;
+    }
+    .footer-logo {
+      font-family: 'Space Mono', monospace;
+      font-size: 1.2rem; font-weight: 700;
+      background: var(--grad-warm);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-decoration: none;
+    }
+    .footer-copy { font-size: .82rem; color: var(--muted); }
+    .footer-links { display: flex; gap: 1.5rem; }
+    .footer-links a { color: var(--muted); font-size: .82rem; text-decoration: none; transition: color .2s; }
+    .footer-links a:hover { color: var(--purple-l); }
+
+    /* ── SCROLL REVEAL ─────────────────────────────────── */
+    .reveal {
+      opacity: 0; transform: translateY(40px);
+      transition: opacity .7s ease, transform .7s ease;
+    }
+    .reveal.visible {
+      opacity: 1; transform: translateY(0);
+    }
+    .reveal-delay-1 { transition-delay: .1s; }
+    .reveal-delay-2 { transition-delay: .2s; }
+    .reveal-delay-3 { transition-delay: .3s; }
+    .reveal-delay-4 { transition-delay: .4s; }
+
+    /* ── RESPONSIVE ────────────────────────────────────── */
+
+    /* Tablet */
+    @media (max-width: 1024px) {
+      .services-grid { grid-template-columns: 1fr 1fr; }
+      .service-card.featured { grid-column: span 2; }
+      .about-grid, .why-grid, .contact-grid { grid-template-columns: 1fr; gap: 3rem; }
+      .about-visual { order: -1; }
+      .about-badge-float.left { left: 0; bottom: 1rem; }
+      .about-badge-float.top { right: 0; top: 1rem; }
+    }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+      /* Nav */
+      .nav-links, .nav-cta { display: none; }
+      .hamburger { display: flex; }
+      #navbar { padding: .9rem 0; }
+
+      /* Urgency bar */
+      #urgencyBar { font-size: .72rem; padding: .55rem .8rem; gap: .5rem; }
+      #urgencyBar span { font-size: .72rem; }
+
+      /* Hero */
+      #hero { padding-top: 100px; min-height: 100svh; }
+      .hero-content { padding: 0; }
+      .hero-badge { font-size: .65rem; letter-spacing: .1em; margin-bottom: 1.2rem; padding: .35rem .9rem; }
+      .hero-title { margin-bottom: 1rem; }
+      .hero-sub { font-size: .95rem; margin-bottom: 1.8rem; max-width: 100%; }
+      .hero-actions { flex-direction: column; gap: .75rem; }
+      .hero-actions .btn { width: 100%; justify-content: center; font-size: .95rem; padding: .9rem 1.5rem; }
+      .hero-scroll { display: none; }
+
+      /* About */
+      .about-img-wrap { aspect-ratio: 4/3; }
+      .about-badge-float { padding: .6rem 1rem; }
+      .about-badge-float.left { left: 0; bottom: 1rem; }
+      .about-badge-float.top { right: 0; top: 1rem; }
+      .badge-num { font-size: 1.2rem; }
+      .about-highlights { gap: 1.2rem; }
+      .highlight-num { font-size: 1.5rem; }
+
+      /* Services */
+      .services-grid { grid-template-columns: 1fr; }
+      .service-card.featured { grid-column: span 1; }
+      .services-header { margin-bottom: 2.5rem; }
+
+      /* Portfolio */
+      .portfolio-grid { grid-template-columns: 1fr 1fr; gap: 1rem; }
+      .portfolio-card:first-child { grid-column: span 2; }
+      .portfolio-card-overlay { opacity: 1; }   /* always show on touch */
+
+      /* Stats */
+      .stats-grid { grid-template-columns: 1fr 1fr; gap: 1px; }
+      .stat-item { padding: 2rem 1rem; }
+      .stat-label { font-size: .78rem; }
+
+      /* Why */
+      .why-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+      .why-main-card .big-num { font-size: 3.5rem; }
+      .why-item { padding: 1rem; }
+      .why-list { gap: 1rem; }
+
+      /* Pain point section */
+      .pain-grid { grid-template-columns: 1fr !important; gap: 1rem !important; }
+
+      /* Testimonials */
+      .testimonial-card { width: 290px; padding: 1.4rem; }
+
+      /* CTA */
+      .cta-actions { flex-direction: column; align-items: center; }
+      .cta-actions .btn { width: 100%; max-width: 360px; justify-content: center; }
+
+      /* Contact */
+      .contact-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+      .form-row { grid-template-columns: 1fr; }
+      .contact-social { flex-wrap: wrap; }
+
+      /* Footer */
+      .footer-inner { flex-direction: column; text-align: center; gap: 1rem; }
+      .footer-links { justify-content: center; flex-wrap: wrap; }
+
+      /* Floating WA */
+      #floatingWA { width: 52px; height: 52px; bottom: 1.4rem; right: 1.4rem; }
+      #floatingWA svg { width: 24px; height: 24px; }
+
+      /* Section padding */
+      .section { padding: 4.5rem 0; }
+      .container { padding: 0 1.2rem; }
+    }
+
+    /* Small mobile */
+    @media (max-width: 480px) {
+      .container { padding: 0 1rem; }
+      .section { padding: 4rem 0; }
+
+      /* Hero */
+      #hero { padding-top: 90px; }
+      .hero-badge { font-size: .6rem; }
+
+      /* Portfolio: single column */
+      .portfolio-grid { grid-template-columns: 1fr; }
+      .portfolio-card:first-child { grid-column: span 1; aspect-ratio: 4/3; }
+
+      /* Stats */
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .stat-item { padding: 1.5rem .75rem; }
+      .stat-num { font-size: 1.8rem; }
+
+      /* FAQ */
+      .faq-q { font-size: .92rem; padding: 1rem 1.1rem; }
+      .faq-a { font-size: .87rem; }
+      .faq-a.open, .faq-item.open .faq-a { padding: .2rem 1.1rem 1.1rem; }
+
+      /* Why cards */
+      .why-side-card { padding: 1rem; }
+      .why-main-card { padding: 1.8rem 1.2rem; }
+      .why-main-card .big-num { font-size: 3rem; }
+
+      /* About badges */
+      .about-badge-float { display: none; }
+
+      /* Buttons full width on very small screens */
+      .btn { font-size: .9rem; padding: .8rem 1.2rem; }
+    }
+
+    /* ── MOBILE NAV ────────────────────────────────────── */
+    .mobile-nav {
+      display: none;
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(7,7,15,.97);
+      backdrop-filter: blur(20px);
+      flex-direction: column; align-items: center; justify-content: center;
+      gap: 2rem;
+    }
+    .mobile-nav.open { display: flex; }
+    .mobile-nav a {
+      color: var(--text); text-decoration: none;
+      font-size: 1.5rem; font-weight: 600;
+      transition: color .2s;
+    }
+    .mobile-nav a:hover { color: var(--purple-l); }
+    .mobile-nav-close {
+      position: absolute; top: 1.5rem; right: 1.5rem;
+      background: none; border: none; color: var(--text);
+      font-size: 1.5rem; cursor: pointer;
+    }
+
+    /* ── FLOATING WA PULSE ────────────────────────────── */
+    @keyframes waPulse {
+      0%,100%{box-shadow:0 4px 24px rgba(37,211,102,.5)}
+      50%{box-shadow:0 4px 40px rgba(37,211,102,.85), 0 0 0 12px rgba(37,211,102,.1)}
+    }
+    #floatingWA:hover { transform:scale(1.1); box-shadow:0 8px 40px rgba(37,211,102,.7)!important; }
+
+    /* ── PAIN GRID RESPONSIVE ──────────────────────────── */
+    @media(max-width:640px){
+      .pain-grid { grid-template-columns:1fr!important; }
+    }
+
+    /* ── FAQ ───────────────────────────────────────────── */
+    .faq-item {
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:12px; overflow:hidden;
+      transition:border-color .2s;
+    }
+    .faq-item:hover, .faq-item.open { border-color:rgba(124,58,237,.5); }
+    .faq-q {
+      width:100%; background:none; border:none;
+      padding:1.2rem 1.5rem;
+      display:flex; justify-content:space-between; align-items:center;
+      gap:1rem; cursor:pointer;
+      color:var(--text); font-family:'Space Grotesk',sans-serif;
+      font-size:1rem; font-weight:600; text-align:left;
+    }
+    .faq-q:hover { color:var(--purple-l); }
+    .faq-icon {
+      font-size:1.4rem; flex-shrink:0; color:var(--purple-l);
+      transition:transform .3s;
+    }
+    .faq-item.open .faq-icon { transform:rotate(45deg); }
+    .faq-a {
+      max-height:0; overflow:hidden;
+      padding:0 1.5rem;
+      color:var(--muted); font-size:.92rem; line-height:1.75;
+      transition:max-height .4s ease, padding .3s;
+    }
+    .faq-item.open .faq-a {
+      max-height:400px;
+      padding:.2rem 1.5rem 1.3rem;
+    }
+
+    /* ── CURSOR GLOW ───────────────────────────────────── */
+    .cursor-glow {
+      position: fixed; pointer-events: none; z-index: 9999;
+      width: 300px; height: 300px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(124,58,237,.08) 0%, transparent 70%);
+      transform: translate(-50%, -50%);
+      transition: opacity .3s;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── URGENCY TOP BAR ── -->
+  <div id="urgencyBar" style="
+    background: linear-gradient(90deg, #7c3aed 0%, #2563eb 60%, #0ea5e9 100%);
+    padding: .6rem 1rem; text-align: center; font-size: .82rem;
+    font-family: 'Space Grotesk', sans-serif; font-weight: 500;
+    letter-spacing: .02em; position: relative; z-index: 101;
+    display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap;
+  ">
+    <span>⚡ <strong>Slot Event Q3–Q4 2025 Terbatas!</strong> — Konsultasi GRATIS sekarang sebelum penuh</span>
+    <a href="https://wa.me/6281916101107" target="_blank" style="
+      background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.4);
+      color: #fff; padding: .3rem .9rem; border-radius: 999px; font-size: .78rem;
+      font-weight: 600; text-decoration: none; white-space: nowrap;
+    ">Chat Sekarang →</a>
+    <button onclick="document.getElementById('urgencyBar').style.display='none'" style="
+      position: absolute; right: .8rem; background: none; border: none;
+      color: rgba(255,255,255,.7); cursor: pointer; font-size: 1rem; padding: 0;
+    ">✕</button>
+  </div>
+
+  <!-- Cursor Glow -->
+  <div class="cursor-glow" id="cursorGlow"></div>
+
+  <!-- Mobile Nav -->
+  <nav class="mobile-nav" id="mobileNav">
+    <button class="mobile-nav-close" id="mobileNavClose">✕</button>
+    <a href="#about" onclick="closeMobileNav()">Tentang</a>
+    <a href="#services" onclick="closeMobileNav()">Layanan</a>
+    <a href="#portfolio" onclick="closeMobileNav()">Portfolio</a>
+    <a href="#why" onclick="closeMobileNav()">Mengapa Kami</a>
+    <a href="#testimonials" onclick="closeMobileNav()">Klien</a>
+    <a href="#contact" onclick="closeMobileNav()">Kontak</a>
+    <a href="#contact" class="btn btn-primary" onclick="closeMobileNav()">Diskusi Sekarang</a>
+  </nav>
+
+  <!-- NAV -->
+  <nav id="navbar">
+    <div class="container nav-inner">
+      <a href="#hero" class="nav-logo">UNIVLOX</a>
+      <ul class="nav-links">
+        <li><a href="#about">Tentang</a></li>
+        <li><a href="#services">Layanan</a></li>
+        <li><a href="#portfolio">Portfolio</a></li>
+        <li><a href="#why">Mengapa Kami</a></li>
+        <li><a href="#testimonials">Klien</a></li>
+        <li><a href="#contact">Kontak</a></li>
+      </ul>
+      <div class="nav-cta">
+        <a href="#contact" class="btn btn-primary" style="padding:.6rem 1.4rem; font-size:.85rem;">Diskusi Sekarang →</a>
+      </div>
+      <div class="hamburger" id="hamburger">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── HERO ── -->
+  <section id="hero">
+    <div class="hero-bg">
+      <div class="hero-glow-1"></div>
+      <div class="hero-glow-2"></div>
+      <div class="hero-glow-3"></div>
+      <div class="hero-grid" id="heroGrid"></div>
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+      <div class="orb orb-4"></div>
+    </div>
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <div class="hero-badge-dot"></div>
+          Event Organizer &amp; Music Promoter — Bali &amp; Nasional
+        </div>
+        <h1 class="heading-xl hero-title">
+          <span>Lelah Mencari EO &amp; MICE yang</span>
+          <span class="grad-text">Profesional &amp; Dapat Diandalkan?</span>
+          <span>Univlox Jawabannya.</span>
+        </h1>
+        <p class="hero-sub">
+          Ratusan event — konser, festival, brand activation, corporate gathering — telah kami eksekusi dengan sempurna. On-brief, on-time, on-budget. <strong style="color:var(--yellow-l);">Konsultasi gratis, tanpa komitmen.</strong>
+        </p>
+        <div class="hero-actions">
+          <a href="https://wa.me/6281916101107" target="_blank" class="btn btn-primary" style="font-size:1.05rem; padding:1rem 2.2rem;">
+            💬 Diskusi Event Kamu
+          </a>
+          <a href="#portfolio" class="btn btn-outline">Lihat Portfolio →</a>
+        </div>
+        <p style="font-size:.8rem; color:var(--muted); margin-top:1rem; animation:fadeUp .8s ease .4s both;">
+          ✅ Konsultasi gratis &nbsp;·&nbsp; ✅ Respon &lt; 1 jam kerja &nbsp;·&nbsp; ✅ Transparan tanpa biaya tersembunyi
+        </p>
+      </div>
+    </div>
+    <div class="hero-scroll" onclick="document.getElementById('about').scrollIntoView({behavior:'smooth'})">
+      <div class="scroll-line"></div>
+      Scroll
+    </div>
+  </section>
+
+  <!-- ── MARQUEE ── -->
+  <div class="marquee-section">
+    <div class="marquee-track" id="marqueeTrack"></div>
+  </div>
+
+  <!-- ── PAIN POINT SECTION ── -->
+  <section id="painpoint" style="background:var(--surface); padding:6rem 0; position:relative; overflow:hidden;">
+    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%, rgba(239,68,68,.05) 0%, transparent 60%);pointer-events:none;"></div>
+    <div class="container">
+      <div style="text-align:center; max-width:680px; margin:0 auto 3.5rem;">
+        <div class="tag reveal" style="border-color:rgba(239,68,68,.3); color:#fca5a5;">⚠️ Masih Sering Kejadian</div>
+        <h2 class="heading-lg reveal reveal-delay-1">Pernah Kecewa dengan EO &amp; MICE Sebelumnya?</h2>
+        <p class="reveal reveal-delay-2" style="color:var(--muted); margin-top:1rem; font-size:1.05rem; line-height:1.7;">Kamu bukan satu-satunya. Ini masalah yang paling sering klien kami ceritakan — sebelum akhirnya pilih Univlox.</p>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:1.2rem; max-width:900px; margin:0 auto 3.5rem;" class="pain-grid">
+        <div class="reveal pain-card" style="background:rgba(239,68,68,.06); border:1px solid rgba(239,68,68,.2); border-radius:14px; padding:1.5rem 1.8rem; display:flex; gap:1rem; align-items:flex-start;">
+          <span style="font-size:1.6rem; flex-shrink:0;">😤</span>
+          <div>
+            <div style="font-weight:700; font-size:1rem; margin-bottom:.4rem; color:#fca5a5;">EO &amp; MICE yang Tidak Amanah</div>
+            <div style="font-size:.88rem; color:var(--muted); line-height:1.6;">Sudah bayar DP, eh vendor-nya belum dikonfirmasi. Brief dilupakan. Kabar menguap.</div>
+          </div>
+        </div>
+        <div class="reveal reveal-delay-1 pain-card" style="background:rgba(239,68,68,.06); border:1px solid rgba(239,68,68,.2); border-radius:14px; padding:1.5rem 1.8rem; display:flex; gap:1rem; align-items:flex-start;">
+          <span style="font-size:1.6rem; flex-shrink:0;">😩</span>
+          <div>
+            <div style="font-weight:700; font-size:1rem; margin-bottom:.4rem; color:#fca5a5;">Hasil Jauh dari Ekspektasi</div>
+            <div style="font-size:.88rem; color:var(--muted); line-height:1.6;">Dekorasi asal-asalan, sound system feedback terus, rundown molor 2 jam. Malu sama tamu.</div>
+          </div>
+        </div>
+        <div class="reveal reveal-delay-2 pain-card" style="background:rgba(239,68,68,.06); border:1px solid rgba(239,68,68,.2); border-radius:14px; padding:1.5rem 1.8rem; display:flex; gap:1rem; align-items:flex-start;">
+          <span style="font-size:1.6rem; flex-shrink:0;">😡</span>
+          <div>
+            <div style="font-weight:700; font-size:1rem; margin-bottom:.4rem; color:#fca5a5;">Koordinasi Jelek &amp; Molor</div>
+            <div style="font-size:.88rem; color:var(--muted); line-height:1.6;">WhatsApp dibaca tapi tidak dibalas. Update progres harus kamu yang kejar terus. Stres sendiri.</div>
+          </div>
+        </div>
+        <div class="reveal reveal-delay-3 pain-card" style="background:rgba(239,68,68,.06); border:1px solid rgba(239,68,68,.2); border-radius:14px; padding:1.5rem 1.8rem; display:flex; gap:1rem; align-items:flex-start;">
+          <span style="font-size:1.6rem; flex-shrink:0;">💸</span>
+          <div>
+            <div style="font-weight:700; font-size:1rem; margin-bottom:.4rem; color:#fca5a5;">Vendor Asal-asalan</div>
+            <div style="font-size:.88rem; color:var(--muted); line-height:1.6;">Vendor dipilih asal murah. Sound rusak di tengah acara. Lighting jadi gelap-gelapan. Nightmare.</div>
+          </div>
+        </div>
+      </div>
+      <!-- SOLUTION BRIDGE -->
+      <div class="reveal" style="text-align:center; max-width:600px; margin:0 auto;">
+        <div style="
+          background:linear-gradient(135deg, rgba(124,58,237,.15) 0%, rgba(37,99,235,.1) 100%);
+          border:1px solid rgba(124,58,237,.4); border-radius:16px; padding:2.5rem 2rem;
+        ">
+          <div style="font-size:2rem; margin-bottom:.8rem;">✅</div>
+          <h3 style="font-size:1.3rem; font-weight:700; margin-bottom:.8rem;">Univlox Hadir Sebagai Solusinya</h3>
+          <p style="color:var(--muted); font-size:.95rem; line-height:1.7; margin-bottom:1.5rem;">Kami tidak hanya berjanji — kami buktikan dengan track record ratusan event sukses. <strong style="color:var(--text);">Satu tim. Satu tanggung jawab. Zero drama.</strong></p>
+          <a href="https://wa.me/6281916101107" target="_blank" class="btn btn-primary" style="justify-content:center; width:100%; max-width:320px;">
+            💬 Konsultasi GRATIS Sekarang →
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── ABOUT ── -->
+  <section id="about" class="section">
+    <div class="about-glow"></div>
+    <div class="container">
+      <div class="about-grid">
+        <div class="about-visual reveal">
+          <div class="about-img-wrap">
+            <div class="about-img-placeholder">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+              <span>Foto Tim / Venue</span>
+            </div>
+          </div>
+          <div class="about-badge-float left">
+            <div class="badge-num" data-count="50">0</div>
+            <div class="badge-label">Event Selesai</div>
+          </div>
+          <div class="about-badge-float top">
+            <div class="badge-num">5★</div>
+            <div class="badge-label">Rating Klien</div>
+          </div>
+        </div>
+        <div class="about-text">
+          <div class="tag reveal">Tentang Univlox</div>
+          <h2 class="heading-lg reveal reveal-delay-1">Lebih dari Sekadar Event Organizer</h2>
+          <div class="reveal reveal-delay-2">
+            <p>Univlox adalah tim kreatif yang passionate di dunia event dan musik. Kami percaya setiap event adalah sebuah karya — dirancang dengan hati, dieksekusi dengan profesionalisme.</p>
+            <p>Dengan pengalaman mengelola berbagai skala acara — dari konser musik eksklusif, festival besar, brand activation, hingga corporate gathering — kami tahu persis apa yang dibutuhkan untuk membuat event Anda berhasil.</p>
+          </div>
+          <div class="about-highlights reveal reveal-delay-3">
+            <div class="highlight-item">
+              <span class="highlight-num" data-count="50">0+</span>
+              <span class="highlight-label">Event Dikelola</span>
+            </div>
+            <div class="highlight-item">
+              <span class="highlight-num" data-count="30">0+</span>
+              <span class="highlight-label">Brand Partner</span>
+            </div>
+            <div class="highlight-item">
+              <span class="highlight-num" data-count="10000">0+</span>
+              <span class="highlight-label">Total Audience</span>
+            </div>
+          </div>
+          <div class="reveal reveal-delay-4" style="margin-top:2.5rem;">
+            <a href="#cta" class="btn btn-primary">Wujudkan Event Impianmu →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── VIDEO SHOWCASE ── -->
+  <section id="video-showcase">
+    <div class="video-showcase-glow"></div>
+    <div class="container">
+      <div class="video-showcase-header">
+        <div class="tag reveal" style="justify-content:center;">Behind the Event</div>
+        <h2 class="heading-lg reveal reveal-delay-1">Rasakan Energinya Sendiri</h2>
+        <p class="reveal reveal-delay-2">Ini bukan sekadar event — ini pengalaman yang membekas. Lihat bagaimana Univlox menghidupkan setiap momen.</p>
+      </div>
+
+      <div class="video-wrapper reveal reveal-delay-2" id="videoWrapper">
+        <!--
+          GANTI VIDEO:
+          Opsi 1 — Video file lokal/CDN:
+            <video id="showcaseVideo" src="video/univlox-highlight.mp4" loop playsinline preload="metadata"></video>
+
+          Opsi 2 — YouTube embed (ganti 'VIDEO_ID_YOUTUBE' dengan ID video kamu):
+            Hapus tag <video> di bawah dan uncomment <iframe> di bawahnya
+        -->
+        <video id="showcaseVideo"
+          src=""
+          loop playsinline preload="metadata"
+          style="background:#07070f;">
+        </video>
+
+        <!--
+          YOUTUBE EMBED — uncomment ini dan hapus <video> di atas jika pakai YouTube:
+          <iframe id="showcaseVideo"
+            src="https://www.youtube.com/embed/VIDEO_ID_YOUTUBE?autoplay=1&mute=1&loop=1&playlist=VIDEO_ID_YOUTUBE&controls=0&showinfo=0&rel=0"
+            frameborder="0" allow="autoplay; encrypted-media" allowfullscreen
+            style="width:100%;height:100%;position:absolute;inset:0;">
+          </iframe>
+        -->
+
+        <!-- Overlay play -->
+        <div class="video-overlay" id="videoOverlay">
+          <div class="video-play-btn" id="videoPlayBtn">
+            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+          <div class="video-overlay-label">Putar Video</div>
+        </div>
+
+        <!-- Badge LIVE/HIGHLIGHT -->
+        <div class="video-corner-badge">
+          <div class="video-corner-badge-dot"></div>
+          HIGHLIGHT REEL
+        </div>
+
+        <!-- Sound toggle -->
+        <div class="video-sound-btn" id="videoSoundBtn" title="Toggle suara">🔇</div>
+
+        <!-- Progress bar -->
+        <div class="video-progress">
+          <div class="video-progress-fill" id="videoProgressFill"></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── GIRL BEHIND ── -->
+  <section id="girl-behind" class="section">
+    <div class="girl-behind-glow"></div>
+    <div class="container">
+      <div class="girl-behind-grid">
+
+        <!-- Foto -->
+        <div class="girl-photo-wrap reveal">
+          <div class="girl-photo-frame">
+            <!--
+              GANTI FOTO:
+              Hapus <div class="girl-photo-placeholder"> di bawah dan ganti dengan:
+              <img src="foto/titin.jpg" alt="Titin Prapmika" />
+            -->
+            <div class="girl-photo-placeholder">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+              </svg>
+              <span>Foto Titin Prapmika</span>
+            </div>
+          </div>
+          <div class="girl-exp-badge">
+            <div class="girl-exp-num">15+</div>
+            <div class="girl-exp-label">Tahun Pengalaman</div>
+          </div>
+        </div>
+
+        <!-- Konten -->
+        <div class="girl-content">
+          <div class="tag reveal">The Girl Behind</div>
+          <h2 class="girl-name reveal reveal-delay-1">Titin Prapmika</h2>
+          <p class="girl-tagline reveal reveal-delay-2">
+            Perempuan di balik setiap event Univlox yang berhasil. Dengan perjalanan panjang di dunia hiburan dan event sejak 2010, Titin membawa energi, pengalaman, dan dedikasi ke setiap project yang ia pegang.
+          </p>
+
+          <div class="girl-roles reveal reveal-delay-2">
+            <div class="girl-role-pill"><span>🎤</span> MC Profesional</div>
+            <div class="girl-role-pill"><span>📻</span> Penyiar Radio</div>
+            <div class="girl-role-pill"><span>🎉</span> Event Organizer</div>
+            <div class="girl-role-pill"><span>💍</span> Wedding Organizer</div>
+          </div>
+
+          <div class="girl-timeline reveal reveal-delay-3">
+            <div class="girl-timeline-item">
+              <div class="girl-timeline-icon">🎤</div>
+              <div>
+                <div class="girl-timeline-title">MC Berpengalaman</div>
+                <div class="girl-timeline-desc">Memandu ratusan acara — dari corporate event, gala dinner, peluncuran produk, hingga konser musik berskala besar sejak 2010.</div>
+              </div>
+            </div>
+            <div class="girl-timeline-item">
+              <div class="girl-timeline-icon">📻</div>
+              <div>
+                <div class="girl-timeline-title">Penyiar Radio</div>
+                <div class="girl-timeline-desc">Terlatih berbicara di depan publik dengan artikulasi dan karisma yang kuat — dibangun dari pengalaman di balik mikrofon radio.</div>
+              </div>
+            </div>
+            <div class="girl-timeline-item">
+              <div class="girl-timeline-icon">💍</div>
+              <div>
+                <div class="girl-timeline-title">Wedding & Event Organizer</div>
+                <div class="girl-timeline-desc">Mengelola pernikahan dan berbagai event dengan sentuhan personal yang memastikan setiap detail terasa spesial dan berkesan.</div>
+              </div>
+            </div>
+          </div>
+          <div class="reveal reveal-delay-4" style="margin-top:2rem;">
+            <a href="#cta" class="btn btn-primary">Wujudkan Event Impianmu →</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SERVICES ── -->
+  <section id="services" class="section">
+    <div class="container">
+      <div class="services-header">
+        <div class="tag reveal">Layanan Kami</div>
+        <h2 class="heading-lg reveal reveal-delay-1">Semua yang Kamu Butuhkan dalam Satu Tim</h2>
+        <p class="reveal reveal-delay-2">Dari konsep awal hingga eksekusi di hari-H, Univlox siap jadi partner terpercaya Anda.</p>
+      </div>
+      <div class="services-grid">
+        <div class="service-card featured reveal">
+          <div class="service-icon">🎵</div>
+          <h3>Music Event &amp; Concert Production</h3>
+          <p>Spesialis dalam menghadirkan pengalaman musik yang tak terlupakan. Dari intimate gigs hingga festival ribuan orang, kami handle semua dari staging, sound, lighting, hingga artis management.</p>
+          <div class="service-tag-list">
+            <span class="service-tag">Konser</span>
+            <span class="service-tag">Festival</span>
+            <span class="service-tag">Club Night</span>
+            <span class="service-tag">DJ Show</span>
+            <span class="service-tag">Artis Management</span>
+          </div>
+        </div>
+        <div class="service-card reveal reveal-delay-1">
+          <div class="service-icon">🏢</div>
+          <h3>Corporate Event</h3>
+          <p>Gathering, gala dinner, team building, product launch, anniversary perusahaan — kami pastikan setiap momen representatif dan berkesan untuk seluruh stakeholder.</p>
+          <div class="service-tag-list">
+            <span class="service-tag">Gathering</span>
+            <span class="service-tag">Gala Dinner</span>
+            <span class="service-tag">Seminar</span>
+          </div>
+        </div>
+        <div class="service-card reveal">
+          <div class="service-icon">🚀</div>
+          <h3>Brand Activation</h3>
+          <p>Ciptakan momen yang bikin brand Anda diingat. Kami rancang aktivasi yang engaging, on-brand, dan viral-worthy.</p>
+          <div class="service-tag-list">
+            <span class="service-tag">Pop-Up</span>
+            <span class="service-tag">Experiential</span>
+            <span class="service-tag">Sampling</span>
+          </div>
+        </div>
+        <div class="service-card reveal reveal-delay-1">
+          <div class="service-icon">🏟️</div>
+          <h3>Festival &amp; Large Scale Event</h3>
+          <p>Expertise dalam mengelola event skala besar: multi-stage festival, outdoor event, hingga event lintas kota dengan ribuan attendee.</p>
+          <div class="service-tag-list">
+            <span class="service-tag">Multi-Stage</span>
+            <span class="service-tag">Outdoor</span>
+            <span class="service-tag">Multi-Day</span>
+          </div>
+        </div>
+        <div class="service-card reveal reveal-delay-2">
+          <div class="service-icon">🏬</div>
+          <h3>Mall &amp; Venue Event</h3>
+          <p>Kerjasama dengan pusat perbelanjaan dan venue untuk menghadirkan traffic, excitement, dan konten yang menarik pengunjung.</p>
+          <div class="service-tag-list">
+            <span class="service-tag">Mall Event</span>
+            <span class="service-tag">Promo Aktivasi</span>
+            <span class="service-tag">Hiburan</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PORTFOLIO ── -->
+  <section id="portfolio" class="section">
+    <div class="portfolio-glow"></div>
+    <div class="container">
+      <div class="portfolio-header">
+        <div class="tag reveal">Portfolio</div>
+        <h2 class="heading-lg reveal reveal-delay-1">Event yang Pernah Kami Hadirkan</h2>
+        <p class="reveal reveal-delay-2">Setiap event adalah cerita. Ini adalah sebagian dari karya kami.</p>
+      </div>
+      <div class="portfolio-filter reveal">
+        <button class="filter-btn active" onclick="filterPortfolio('all', this)">Semua</button>
+        <button class="filter-btn" onclick="filterPortfolio('music', this)">Music Event</button>
+        <button class="filter-btn" onclick="filterPortfolio('corporate', this)">Corporate</button>
+        <button class="filter-btn" onclick="filterPortfolio('brand', this)">Brand Activation</button>
+        <button class="filter-btn" onclick="filterPortfolio('festival', this)">Festival</button>
+      </div>
+      <div class="portfolio-grid" id="portfolioGrid">
+        <!-- card 1: featured -->
+        <div class="portfolio-card reveal" data-cat="music">
+          <div class="portfolio-placeholder">
+            <div class="portfolio-placeholder-icon">🎤</div>
+          </div>
+          <div class="portfolio-card-overlay">
+            <div class="portfolio-card-cat">Music Event</div>
+            <div class="portfolio-card-title">Univlox Music Night — Vol. 01</div>
+            <div class="portfolio-card-info">Bali · 2.000+ Audience</div>
+          </div>
+        </div>
+        <!-- card 2 -->
+        <div class="portfolio-card reveal reveal-delay-1" data-cat="corporate">
+          <div class="portfolio-placeholder">
+            <div class="portfolio-placeholder-icon">🏢</div>
+          </div>
+          <div class="portfolio-card-overlay">
+            <div class="portfolio-card-cat">Corporate Event</div>
+            <div class="portfolio-card-title">Annual Gathering XYZ Corp</div>
+            <div class="portfolio-card-info">Jakarta · 500 Attendee</div>
+          </div>
+        </div>
+        <!-- card 3 -->
+        <div class="portfolio-card reveal reveal-delay-2" data-cat="brand">
+          <div class="portfolio-placeholder">
+            <div class="portfolio-placeholder-icon">🚀</div>
+          </div>
+          <div class="portfolio-card-overlay">
+            <div class="portfolio-card-cat">Brand Activation</div>
+            <div class="portfolio-card-title">Brand X Pop-Up Experience</div>
+            <div class="portfolio-card-info">Bali · Mall Central Park</div>
+          </div>
+        </div>
+        <!-- card 4 -->
+        <div class="portfolio-card reveal" data-cat="festival">
+          <div class="portfolio-placeholder">
+            <div class="portfolio-placeholder-icon">🏟️</div>
+          </div>
+          <div class="portfolio-card-overlay">
+            <div class="portfolio-card-cat">Festival</div>
+            <div class="portfolio-card-title">Sunrise Festival Bali 2024</div>
+            <div class="portfolio-card-info">Bali · 5.000+ Audience</div>
+          </div>
+        </div>
+        <!-- card 5 -->
+        <div class="portfolio-card reveal reveal-delay-1" data-cat="music">
+          <div class="portfolio-placeholder">
+            <div class="portfolio-placeholder-icon">🎧</div>
+          </div>
+          <div class="portfolio-card-overlay">
+            <div class="portfolio-card-cat">Music Event</div>
+            <div class="portfolio-card-title">Electronic Underground — Bali</div>
+            <div class="portfolio-card-info">Bali · Club Venue</div>
+          </div>
+        </div>
+        <!-- card 6 -->
+        <div class="portfolio-card reveal reveal-delay-2" data-cat="corporate">
+          <div class="portfolio-placeholder">
+            <div class="portfolio-placeholder-icon">🎊</div>
+          </div>
+          <div class="portfolio-card-overlay">
+            <div class="portfolio-card-cat">Corporate Event</div>
+            <div class="portfolio-card-title">Product Launch — Brand ABC</div>
+            <div class="portfolio-card-info">Denpasar · Press &amp; Media</div>
+          </div>
+        </div>
+      </div>
+      <div class="reveal" style="text-align:center; margin-top:3rem;">
+        <a href="#cta" class="btn btn-primary">Wujudkan Event Impianmu →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── STATS ── -->
+  <section id="stats">
+    <div class="stats-glow"></div>
+    <div class="container">
+      <div class="stats-grid reveal">
+        <div class="stat-item">
+          <span class="stat-num" data-count="50">0</span>
+          <span class="stat-label">Event Berhasil</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-num" data-count="30">0</span>
+          <span class="stat-label">Brand &amp; Klien</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-num" data-count="10000">0</span>
+          <span class="stat-label">Total Penonton</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-num" data-count="5">0</span>
+          <span class="stat-label">Tahun Pengalaman</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── WHY UNIVLOX ── -->
+  <section id="why" class="section">
+    <div class="why-bg-text">UNIVLOX</div>
+    <div class="container">
+      <div class="why-grid">
+        <div>
+          <div class="tag reveal">Mengapa Kami</div>
+          <h2 class="heading-lg reveal reveal-delay-1">Partner Event yang Bisa Kamu Percaya</h2>
+          <div class="why-list">
+            <div class="why-item reveal reveal-delay-1">
+              <div class="why-icon">🎯</div>
+              <div>
+                <h4>End-to-End Execution</h4>
+                <p>Dari concept, planning, vendor coordination, hingga post-event report — semua kami tangani. Klien tinggal hadir dan menikmati hasilnya.</p>
+              </div>
+            </div>
+            <div class="why-item reveal reveal-delay-2">
+              <div class="why-icon">🌐</div>
+              <div>
+                <h4>Jaringan Vendor &amp; Artis Luas</h4>
+                <p>Akses ke ratusan vendor terpercaya dan network artis nasional-internasional yang kami bangun selama bertahun-tahun.</p>
+              </div>
+            </div>
+            <div class="why-item reveal reveal-delay-3">
+              <div class="why-icon">⚡</div>
+              <div>
+                <h4>Responsif &amp; On-Time</h4>
+                <p>Deadline adalah harga mati. Kami dikenal karena eksekusi tepat waktu dan komunikasi yang cepat dan transparan.</p>
+              </div>
+            </div>
+            <div class="why-item reveal reveal-delay-4">
+              <div class="why-icon">💡</div>
+              <div>
+                <h4>Kreatif &amp; Data-Driven</h4>
+                <p>Konsep kreatif yang unik dipadukan dengan pendekatan berbasis data untuk memastikan setiap event mencapai tujuan bisnis.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="why-visual reveal reveal-delay-2">
+          <div class="why-card-stack">
+            <div class="why-main-card">
+              <div class="big-num" data-count="100">0</div>
+              <div class="big-label">% Client Satisfaction</div>
+              <div class="big-sub">Berdasarkan survei post-event 2023–2024</div>
+            </div>
+            <div class="why-side-card">
+              <div class="why-side-icon">🏆</div>
+              <div>
+                <div class="why-side-title">Best Event Organizer</div>
+                <div class="why-side-sub">Bali Creative Awards 2024</div>
+              </div>
+            </div>
+            <div class="why-side-card">
+              <div class="why-side-icon">🤝</div>
+              <div>
+                <div class="why-side-title">Trusted by 30+ Brands</div>
+                <div class="why-side-sub">Dari UMKM hingga korporasi besar</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── TESTIMONIALS ── -->
+  <section id="testimonials" class="section">
+    <div class="container">
+      <div class="testimonials-header">
+        <div class="tag reveal">Kata Klien</div>
+        <h2 class="heading-lg reveal reveal-delay-1">Mereka yang Sudah Merasakan</h2>
+        <p class="reveal reveal-delay-2">Kepercayaan klien adalah validasi terbaik untuk kami.</p>
+      </div>
+    </div>
+    <div class="testimonials-track-wrap">
+      <div class="testimonials-track" id="testimonialsTrack"></div>
+    </div>
+  </section>
+
+  <!-- ── CLIENT LOGOS ── -->
+  <section id="clients">
+    <div class="container">
+      <div class="clients-header">
+        <div class="tag reveal" style="justify-content:center;">Brand &amp; Client</div>
+        <h2 class="heading-md reveal reveal-delay-1">Dipercaya oleh Brand-Brand Terbaik</h2>
+        <p class="reveal reveal-delay-2">Dari startup hingga korporasi — mereka sudah merasakan perbedaan Univlox.</p>
+      </div>
+      <div class="clients-logo-grid reveal reveal-delay-2">
+        <!--
+          CARA PAKAI:
+          Ganti <div class="client-logo-placeholder"> dengan:
+          <img src="logo/nama-brand.png" alt="Nama Brand" />
+          di dalam setiap .client-logo-item
+        -->
+        <div class="client-logo-item">
+          <div class="client-logo-placeholder"><strong>Brand A</strong>Logo</div>
+        </div>
+        <div class="client-logo-item">
+          <div class="client-logo-placeholder"><strong>Brand B</strong>Logo</div>
+        </div>
+        <div class="client-logo-item">
+          <div class="client-logo-placeholder"><strong>Brand C</strong>Logo</div>
+        </div>
+        <div class="client-logo-item">
+          <div class="client-logo-placeholder"><strong>Brand D</strong>Logo</div>
+        </div>
+        <div class="client-logo-item">
+          <div class="client-logo-placeholder"><strong>Brand E</strong>Logo</div>
+        </div>
+        <div class="client-logo-item">
+          <div class="client-logo-placeholder"><strong>Brand F</strong>Logo</div>
+        </div>
+        <div class="client-logo-item">
+          <div class="client-logo-placeholder"><strong>Brand G</strong>Logo</div>
+        </div>
+        <div class="client-logo-item">
+          <div class="client-logo-placeholder"><strong>Brand H</strong>Logo</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FAQ ── -->
+  <section id="faq" style="background:var(--bg); padding:7rem 0;">
+    <div class="container">
+      <div style="text-align:center; max-width:600px; margin:0 auto 4rem;">
+        <div class="tag reveal">FAQ</div>
+        <h2 class="heading-lg reveal reveal-delay-1">Pertanyaan yang Sering Ditanyakan</h2>
+        <p class="reveal reveal-delay-2" style="color:var(--muted); margin-top:1rem; font-size:1.05rem;">Kalau belum ada jawabannya di sini, langsung tanya kami via WhatsApp.</p>
+      </div>
+      <div style="max-width:780px; margin:0 auto; display:flex; flex-direction:column; gap:.8rem;" id="faqList">
+        <div class="faq-item reveal">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            <span>Berapa biaya jasa event organizer Univlox?</span>
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-a">
+            Biaya kami sangat bergantung pada skala, konsep, dan kebutuhan spesifik event kamu. Mulai dari event intimate hingga festival ribuan orang — semua ada paketnya. Yang pasti, kami transparan soal harga dari awal. <strong>Konsultasi GRATIS</strong> dan dapatkan estimasi budget tanpa komitmen.
+            <div style="margin-top:1rem;">
+              <a href="https://wa.me/6281916101107" target="_blank" class="btn btn-primary" style="padding:.6rem 1.4rem; font-size:.85rem;">💬 Tanya Harga via WA</a>
+            </div>
+          </div>
+        </div>
+        <div class="faq-item reveal reveal-delay-1">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            <span>Berapa jauh hari sebelumnya harus book Univlox?</span>
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-a">
+            Idealnya <strong>minimum 2–4 minggu</strong> sebelum event untuk skala kecil-menengah, dan <strong>2–3 bulan</strong> untuk festival atau event besar. Slot kami sering terisi cepat — semakin cepat kamu hubungi kami, semakin banyak pilihan yang tersedia.
+          </div>
+        </div>
+        <div class="faq-item reveal reveal-delay-2">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            <span>Apakah Univlox bisa handle event di luar Bali?</span>
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-a">
+            Ya! Kami sudah handle event di berbagai kota — Jakarta, Surabaya, Lombok, dan kota-kota lainnya. Kami punya jaringan vendor dan crew profesional di banyak daerah, sehingga kualitas terjaga di mana pun event berlangsung.
+          </div>
+        </div>
+        <div class="faq-item reveal reveal-delay-3">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            <span>Apa yang membedakan Univlox dari EO &amp; MICE lain?</span>
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-a">
+            Tiga hal: <strong>komunikasi yang transparan</strong> (kamu selalu tahu progress eventmu), <strong>vendor network yang sudah terkurasi</strong> (bukan asal murah), dan <strong>dedikasi tim khusus per event</strong> — bukan dikerjakan sambil lalu. Klien kami banyak yang balik lagi — itu bukti terbaik.
+          </div>
+        </div>
+        <div class="faq-item reveal">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            <span>Layanan apa saja yang masuk dalam paket full EO &amp; MICE?</span>
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-a">
+            Paket full EO &amp; MICE Univlox mencakup: konsep &amp; kreatif, vendor management (sound, lighting, staging, dekorasi), artis/talent booking, rundown &amp; floor management, koordinasi hari-H, dokumentasi, hingga post-event report. Semua dalam satu harga yang jelas.
+          </div>
+        </div>
+      </div>
+      <div class="reveal" style="text-align:center; margin-top:3rem;">
+        <p style="color:var(--muted); margin-bottom:1.2rem;">Masih ada pertanyaan? Tim kami siap menjawab.</p>
+        <a href="https://wa.me/6281916101107" target="_blank" class="btn btn-primary">💬 Tanya Langsung via WhatsApp</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA ── -->
+  <section id="cta">
+    <div class="cta-glow"></div>
+    <div class="container">
+      <div class="cta-inner">
+        <div class="tag reveal" style="justify-content:center; border-color:rgba(245,158,11,.4); color:var(--yellow-l);">⚡ Jangan Tunda Lagi</div>
+        <h2 class="heading-lg reveal reveal-delay-1">Slot Kami <span class="grad-text">Terbatas</span> — Hubungi Kami Sekarang</h2>
+        <p class="reveal reveal-delay-2">Setiap bulan kami hanya menerima klien baru dalam jumlah terbatas agar kualitas terjaga. Kalau kamu serius, jangan tunggu sampai slot habis.</p>
+        <div style="display:flex; gap:1.5rem; justify-content:center; flex-wrap:wrap; margin-bottom:1.5rem;" class="reveal reveal-delay-3">
+          <div style="text-align:center;">
+            <div style="font-family:'Space Mono',monospace; font-size:2rem; font-weight:700; color:var(--yellow);" id="ctaCountdown">3</div>
+            <div style="font-size:.78rem; color:var(--muted);">Slot tersisa bulan ini</div>
+          </div>
+        </div>
+        <div class="cta-actions reveal reveal-delay-3">
+          <a href="https://wa.me/6281916101107" target="_blank" class="btn btn-primary" style="font-size:1.05rem; padding:1rem 2.2rem; box-shadow:0 0 40px rgba(124,58,237,.6);">
+            💬 Chat WhatsApp Sekarang
+          </a>
+          <a href="#contact" class="btn btn-outline">📋 Isi Form Brief Event</a>
+        </div>
+        <p style="font-size:.8rem; color:var(--muted); margin-top:1.2rem;" class="reveal">
+          ✅ Respon &lt; 1 jam kerja &nbsp;·&nbsp; ✅ GRATIS konsultasi &nbsp;·&nbsp; ✅ Tanpa hidden fee
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CONTACT ── -->
+  <section id="contact" class="section">
+    <div class="container">
+      <div class="tag reveal">Hubungi Kami</div>
+      <h2 class="heading-lg reveal reveal-delay-1" style="margin-bottom:3rem;">Mari Ngobrol Tentang Event Kamu</h2>
+      <div class="contact-grid">
+        <div class="contact-info reveal">
+          <h3>Informasi Kontak</h3>
+          <div class="contact-item">
+            <div class="contact-icon">📍</div>
+            <div>
+              <div class="contact-item-label">Lokasi</div>
+              <div class="contact-item-value">Bali, Indonesia</div>
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-icon">📧</div>
+            <div>
+              <div class="contact-item-label">Email</div>
+              <div class="contact-item-value">hello@univlox.com</div>
+            </div>
+          </div>
+          <!-- Inline WA CTA -->
+          <a href="https://wa.me/6281916101107" target="_blank" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:.5rem; font-size:.95rem;">
+            💬 Chat Langsung via WhatsApp
+          </a>
+          <p style="font-size:.75rem; color:var(--muted); text-align:center; margin-top:.5rem;">Respon rata-rata &lt; 1 jam kerja</p>
+          <div class="contact-item">
+            <div class="contact-icon">📱</div>
+            <div>
+              <div class="contact-item-label">WhatsApp</div>
+              <div class="contact-item-value">
+                <a href="https://wa.me/6281916101107" target="_blank" style="color:inherit; text-decoration:none;">+62 819-1610-1107</a>
+              </div>
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-icon">🕐</div>
+            <div>
+              <div class="contact-item-label">Jam Kerja</div>
+              <div class="contact-item-value">Senin – Sabtu, 09:00 – 18:00 WITA</div>
+            </div>
+          </div>
+          <div class="contact-social">
+            <a href="#" class="social-btn" title="Instagram">📸</a>
+            <a href="#" class="social-btn" title="TikTok">🎵</a>
+            <a href="#" class="social-btn" title="LinkedIn">💼</a>
+            <a href="#" class="social-btn" title="YouTube">▶️</a>
+          </div>
+        </div>
+        <div class="reveal reveal-delay-2">
+          <form class="contact-form" id="contactForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Nama Lengkap *</label>
+                <input type="text" placeholder="Nama kamu" required />
+              </div>
+              <div class="form-group">
+                <label>Nomor WhatsApp *</label>
+                <input type="tel" placeholder="+62 812 ..." required />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" placeholder="email@kamu.com" />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Jenis Event *</label>
+                <select required>
+                  <option value="">Pilih jenis event</option>
+                  <option>Music Event / Konser</option>
+                  <option>Corporate Event</option>
+                  <option>Brand Activation</option>
+                  <option>Festival</option>
+                  <option>Mall / Venue Event</option>
+                  <option>Lainnya</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Estimasi Budget</label>
+                <select>
+                  <option value="">Pilih range budget</option>
+                  <option>&lt; Rp 50 Juta</option>
+                  <option>Rp 50 – 200 Juta</option>
+                  <option>Rp 200 Juta – 1 Miliar</option>
+                  <option>&gt; Rp 1 Miliar</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Ceritakan Event Kamu</label>
+              <textarea placeholder="Gambaran singkat event, tanggal estimasi, lokasi, dan kebutuhan khusus lainnya..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">
+              Kirim Pesan →
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FLOATING WA BUTTON ── -->
+  <a href="https://wa.me/6281916101107" target="_blank" id="floatingWA"
+    title="Chat WhatsApp Univlox"
+    style="
+      position:fixed; bottom:2rem; right:2rem; z-index:500;
+      width:60px; height:60px; border-radius:50%;
+      background:linear-gradient(135deg, #25d366, #128c7e);
+      display:flex; align-items:center; justify-content:center;
+      box-shadow:0 4px 24px rgba(37,211,102,.5);
+      text-decoration:none; font-size:1.6rem;
+      transition:transform .2s, box-shadow .2s;
+      animation:waPulse 2.5s ease-in-out infinite;
+    ">
+    <svg viewBox="0 0 24 24" fill="white" width="28" height="28">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+    </svg>
+    <span id="waBubble" style="
+      position:absolute; top:-4px; right:-4px;
+      background:#ef4444; color:#fff;
+      width:18px; height:18px; border-radius:50%;
+      font-size:.65rem; font-weight:700;
+      display:flex; align-items:center; justify-content:center;
+      font-family:'Space Grotesk',sans-serif;
+      border:2px solid var(--bg);
+    ">1</span>
+  </a>
+
+  <!-- ── FOOTER ── -->
+  <footer>
+    <div class="container footer-inner">
+      <a href="#hero" class="footer-logo">UNIVLOX</a>
+      <p class="footer-copy">© 2025 Univlox. All rights reserved.</p>
+      <div class="footer-links">
+        <a href="#about">Tentang</a>
+        <a href="#services">Layanan</a>
+        <a href="#portfolio">Portfolio</a>
+        <a href="#contact">Kontak</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // ── NAVBAR SCROLL ──────────────────────────────────
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      navbar.classList.toggle('scrolled', window.scrollY > 50);
+    });
+
+    // ── MOBILE NAV ─────────────────────────────────────
+    document.getElementById('hamburger').addEventListener('click', () => {
+      document.getElementById('mobileNav').classList.add('open');
+    });
+    document.getElementById('mobileNavClose').addEventListener('click', closeMobileNav);
+    function closeMobileNav() {
+      document.getElementById('mobileNav').classList.remove('open');
+    }
+
+    // ── CURSOR GLOW ────────────────────────────────────
+    const glow = document.getElementById('cursorGlow');
+    document.addEventListener('mousemove', e => {
+      glow.style.left = e.clientX + 'px';
+      glow.style.top  = e.clientY + 'px';
+    });
+
+    // ── PARALLAX HERO GRID ─────────────────────────────
+    const heroGrid = document.getElementById('heroGrid');
+    window.addEventListener('scroll', () => {
+      const y = window.scrollY;
+      if (heroGrid) heroGrid.style.transform = `translateY(${y * 0.3}px)`;
+    });
+
+    // ── MARQUEE ────────────────────────────────────────
+    const marqueeItems = [
+      'Music Event', 'Corporate Event', 'Brand Activation',
+      'Festival', 'Concert Production', 'Club Night',
+      'Artis Management', 'Outdoor Event', 'Mall Event',
+      'Team Building', 'Product Launch', 'Gala Dinner'
+    ];
+    const track = document.getElementById('marqueeTrack');
+    const repeated = [...marqueeItems, ...marqueeItems, ...marqueeItems, ...marqueeItems];
+    track.innerHTML = repeated.map(item =>
+      `<div class="marquee-item"><div class="marquee-dot"></div>${item}</div>`
+    ).join('');
+
+    // ── TESTIMONIALS ───────────────────────────────────
+    const testimonials = [
+      { text: '"Univlox benar-benar mengerti visi kami. Event launching produk kami berjalan mulus dan responsenya luar biasa dari tamu undangan!"', name: 'Arinda S.', role: 'Marketing Manager, Brand XYZ', initial: 'A' },
+      { text: '"Festival yang kami percayakan ke Univlox berhasil melampaui ekspektasi — 5.000 lebih penonton dan zero masalah teknis. Salut!"', name: 'Bimo W.', role: 'Promotor Independen', initial: 'B' },
+      { text: '"Team Univlox super responsif. Dari planning sampai H-Day, semua terkomunikasikan dengan baik. Klien senang, kami senang!"', name: 'Cornelia T.', role: 'Event Manager, Mall ABC', initial: 'C' },
+      { text: '"Gala dinner perusahaan kami jadi yang paling berkesan sepanjang sejarah. Dekorasi, entertainment, flow acaranya sempurna."', name: 'Dito P.', role: 'CEO, PT Maju Bersama', initial: 'D' },
+      { text: '"Brand activation yang Univlox rancang untuk kami viral di media sosial. Engagement melonjak 300% dalam seminggu. Luar biasa!"', name: 'Eka R.', role: 'Brand Director, Startup Tech', initial: 'E' },
+      { text: '"Profesional, kreatif, dan on-budget. Trifecta yang langka di industri ini. Univlox sudah jadi EO &amp; MICE andalan kami sejak 2022."', name: 'Fara N.', role: 'PR Manager, Hotel Bali', initial: 'F' },
+    ];
+    const tTrack = document.getElementById('testimonialsTrack');
+    const doubled = [...testimonials, ...testimonials];
+    tTrack.innerHTML = doubled.map(t => `
+      <div class="testimonial-card">
+        <div class="testimonial-stars">★★★★★</div>
+        <p class="testimonial-text">${t.text}</p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar">${t.initial}</div>
+          <div>
+            <div class="testimonial-name">${t.name}</div>
+            <div class="testimonial-role">${t.role}</div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    // ── SCROLL REVEAL ──────────────────────────────────
+    const revealEls = document.querySelectorAll('.reveal');
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          revealObserver.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    revealEls.forEach(el => revealObserver.observe(el));
+
+    // ── COUNTER ANIMATION ──────────────────────────────
+    function animateCounter(el) {
+      const target = parseInt(el.getAttribute('data-count'));
+      const duration = 1800;
+      const start = performance.now();
+      const isThousand = target >= 1000;
+
+      function update(now) {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = Math.floor(eased * target);
+        el.textContent = isThousand
+          ? (current >= 1000 ? (current/1000).toFixed(1) + 'K' : current)
+          : current;
+        if (progress < 1) requestAnimationFrame(update);
+        else el.textContent = isThousand ? (target/1000).toFixed(0) + 'K+' : target + (el.textContent.includes('%') ? '%' : '+');
+      }
+      requestAnimationFrame(update);
+    }
+
+    const counterObserver = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting && e.target.hasAttribute('data-count')) {
+          animateCounter(e.target);
+          counterObserver.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.5 });
+    document.querySelectorAll('[data-count]').forEach(el => counterObserver.observe(el));
+
+    // ── PORTFOLIO FILTER ───────────────────────────────
+    function filterPortfolio(cat, btn) {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.portfolio-card').forEach(card => {
+        const show = cat === 'all' || card.dataset.cat === cat;
+        card.style.opacity = show ? '1' : '0.2';
+        card.style.pointerEvents = show ? 'auto' : 'none';
+        card.style.transform = show ? '' : 'scale(0.95)';
+        card.style.transition = 'opacity .3s, transform .3s';
+      });
+    }
+
+    // ── CONTACT FORM ───────────────────────────────────
+    document.getElementById('contactForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const btn = this.querySelector('button[type=submit]');
+      btn.textContent = '✅ Pesan Terkirim! Kami akan segera menghubungi kamu.';
+      btn.style.background = 'linear-gradient(135deg, #059669, #0284c7)';
+      btn.disabled = true;
+    });
+
+    // ── VIDEO SHOWCASE ─────────────────────────────────
+    const videoWrapper  = document.getElementById('videoWrapper');
+    const showcaseVideo = document.getElementById('showcaseVideo');
+    const videoOverlay  = document.getElementById('videoOverlay');
+    const videoPlayBtn  = document.getElementById('videoPlayBtn');
+    const videoSoundBtn = document.getElementById('videoSoundBtn');
+    const progressFill  = document.getElementById('videoProgressFill');
+
+    if (showcaseVideo && showcaseVideo.tagName === 'VIDEO') {
+      // Play / pause saat klik wrapper atau tombol play
+      function togglePlay() {
+        if (showcaseVideo.paused) {
+          showcaseVideo.play();
+          videoWrapper.classList.add('playing');
+          videoPlayBtn.querySelector('svg path').setAttribute('d', 'M6 19h4V5H6v14zm8-14v14h4V5h-4z');
+        } else {
+          showcaseVideo.pause();
+          videoWrapper.classList.remove('playing');
+          videoPlayBtn.querySelector('svg path').setAttribute('d', 'M8 5v14l11-7z');
+        }
+      }
+
+      videoWrapper.addEventListener('click', function(e) {
+        if (e.target === videoSoundBtn || videoSoundBtn.contains(e.target)) return;
+        togglePlay();
+      });
+
+      // Sound toggle — video mulai muted
+      showcaseVideo.muted = true;
+      videoSoundBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        showcaseVideo.muted = !showcaseVideo.muted;
+        videoSoundBtn.textContent = showcaseVideo.muted ? '🔇' : '🔊';
+      });
+
+      // Progress bar
+      showcaseVideo.addEventListener('timeupdate', function() {
+        if (showcaseVideo.duration) {
+          progressFill.style.width = (showcaseVideo.currentTime / showcaseVideo.duration * 100) + '%';
+        }
+      });
+
+      // Auto-play saat masuk viewport (muted)
+      const videoObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting && showcaseVideo.paused && showcaseVideo.src) {
+            showcaseVideo.play().then(() => {
+              videoWrapper.classList.add('playing');
+            }).catch(() => {});
+          } else if (!entry.isIntersecting) {
+            showcaseVideo.pause();
+            videoWrapper.classList.remove('playing');
+          }
+        });
+      }, { threshold: 0.4 });
+      videoObserver.observe(videoWrapper);
+    }
+
+    // ── FAQ TOGGLE ─────────────────────────────────────
+    function toggleFaq(btn) {
+      const item = btn.closest('.faq-item');
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
+      if (!isOpen) item.classList.add('open');
+    }
+
+    // ── FLOATING WA — show after scroll ───────────────
+    const floatingWA = document.getElementById('floatingWA');
+    floatingWA.style.opacity = '0';
+    floatingWA.style.transform = 'scale(0.8)';
+    floatingWA.style.transition = 'opacity .4s, transform .4s';
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 300) {
+        floatingWA.style.opacity = '1';
+        floatingWA.style.transform = 'scale(1)';
+      } else {
+        floatingWA.style.opacity = '0';
+        floatingWA.style.transform = 'scale(0.8)';
+      }
+    });
+
+    // ── SMOOTH ANCHOR SCROLL ───────────────────────────
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', function(e) {
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+  </script>
+</body>
+</html>
