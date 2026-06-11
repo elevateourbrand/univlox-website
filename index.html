@@ -7,7 +7,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     /* ── RESET & BASE ──────────────────────────────────── */
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -2529,21 +2528,28 @@
 
     // ── CMS PHOTO LOADER ───────────────────────────────
     (function() {
-      const CMS_SUPABASE_URL      = 'https://kjdtawflhymxmnauvimb.supabase.co';
-      const CMS_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqZHRhd2ZsaHlteG1uYXV2aW1iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwNzE3MjIsImV4cCI6MjA5NjY0NzcyMn0.Brae15jQdjNms54V54F4iFjEKn3EqZaS30bclkmXv94';
-      const CACHE_KEY = 'univlox_cms_photos';
+      const BASE   = 'https://kjdtawflhymxmnauvimb.supabase.co/rest/v1';
+      const ANON   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqZHRhd2ZsaHlteG1uYXV2aW1iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwNzE3MjIsImV4cCI6MjA5NjY0NzcyMn0.Brae15jQdjNms54V54F4iFjEKn3EqZaS30bclkmXv94';
+      const HEADS  = { 'apikey': ANON, 'Authorization': 'Bearer ' + ANON };
+      const CACHE  = 'univlox_cms_v2';
+
+      async function sbFetch(query) {
+        const r = await fetch(BASE + '/photos?select=*&' + query, { headers: HEADS });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      }
 
       function applyCarousel(photos) {
         const track  = document.getElementById('carouselTrack');
         const dotsEl = document.getElementById('carouselDots');
         if (!track || !dotsEl || !photos.length) return;
         track.innerHTML = photos.map(p =>
-          `<div class="carousel-slide"><img src="${p.url}" alt="Univlox Event" loading="lazy" /></div>`
+          `<div class="carousel-slide"><img src="${p.url}" alt="Univlox Event" /></div>`
         ).join('');
         dotsEl.innerHTML = photos.map((_, i) =>
           `<div class="carousel-dot ${i===0?'active':''}" onclick="goToSlide(${i})"></div>`
         ).join('');
-        goToSlide(0);
+        if (typeof goToSlide === 'function') goToSlide(0);
       }
 
       function applyTitin(url) {
@@ -2551,41 +2557,34 @@
         if (frame && url) frame.innerHTML = `<img src="${url}" alt="Titin Prapmika" />`;
       }
 
-      // 1. Tampilkan dari cache dulu (instan, tidak ada flash placeholder)
+      // 1. Cache dulu — tampil instan tanpa flash
       try {
-        const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+        const cached = JSON.parse(localStorage.getItem(CACHE) || 'null');
         if (cached) {
-          if (cached.carousel?.length) applyCarousel(cached.carousel);
-          if (cached.titin)            applyTitin(cached.titin);
+          if (cached.carousel && cached.carousel.length) applyCarousel(cached.carousel);
+          if (cached.titin) applyTitin(cached.titin);
         }
       } catch(e) {}
 
-      // 2. Fetch dari Supabase di background, update cache + tampilan
+      // 2. Fetch langsung dari Supabase REST API (tanpa SDK)
       (async function() {
         try {
-          const sb = supabase.createClient(CMS_SUPABASE_URL, CMS_SUPABASE_ANON_KEY);
+          const [carousel, titin] = await Promise.all([
+            sbFetch('section=eq.carousel&order=display_order.asc'),
+            sbFetch('section=eq.titin&order=created_at.desc&limit=1')
+          ]);
 
-          const { data: carouselPhotos } = await sb.from('photos')
-            .select('*').eq('section', 'carousel')
-            .order('display_order', { ascending: true });
+          const titinUrl = titin && titin[0] ? titin[0].url : null;
 
-          const { data: titinPhotos } = await sb.from('photos')
-            .select('*').eq('section', 'titin')
-            .order('created_at', { ascending: false }).limit(1);
+          if (carousel && carousel.length) applyCarousel(carousel);
+          if (titinUrl) applyTitin(titinUrl);
 
-          const titinUrl = titinPhotos?.[0]?.url || null;
-
-          // Update tampilan
-          if (carouselPhotos?.length) applyCarousel(carouselPhotos);
-          if (titinUrl)               applyTitin(titinUrl);
-
-          // Simpan ke cache untuk load berikutnya
-          localStorage.setItem(CACHE_KEY, JSON.stringify({
-            carousel: carouselPhotos || [],
+          localStorage.setItem(CACHE, JSON.stringify({
+            carousel: carousel || [],
             titin: titinUrl
           }));
         } catch(e) {
-          console.warn('CMS photo loader:', e.message);
+          console.error('CMS loader error:', e);
         }
       })();
     })();
