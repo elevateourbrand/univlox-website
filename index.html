@@ -2528,51 +2528,66 @@
     });
 
     // ── CMS PHOTO LOADER ───────────────────────────────
-    // Setelah setup Supabase di admin.html, isi juga nilai di bawah ini
-    // agar foto yang diupload lewat admin langsung tampil di website.
-    (async function loadCMSPhotos() {
+    (function() {
       const CMS_SUPABASE_URL      = 'https://kjdtawflhymxmnauvimb.supabase.co';
       const CMS_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqZHRhd2ZsaHlteG1uYXV2aW1iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwNzE3MjIsImV4cCI6MjA5NjY0NzcyMn0.Brae15jQdjNms54V54F4iFjEKn3EqZaS30bclkmXv94';
+      const CACHE_KEY = 'univlox_cms_photos';
 
-      if (CMS_SUPABASE_URL === 'YOUR_SUPABASE_URL') return; // belum dikonfigurasi, pakai placeholder
-
-      try {
-        const sb = supabase.createClient(CMS_SUPABASE_URL, CMS_SUPABASE_ANON_KEY);
-
-        // Load foto carousel
-        const { data: carouselPhotos } = await sb.from('photos')
-          .select('*').eq('section', 'carousel')
-          .order('display_order', { ascending: true });
-
-        if (carouselPhotos && carouselPhotos.length > 0) {
-          const track     = document.getElementById('carouselTrack');
-          const dotsEl    = document.getElementById('carouselDots');
-          if (track && dotsEl) {
-            track.innerHTML = carouselPhotos.map(p =>
-              `<div class="carousel-slide"><img src="${p.url}" alt="Univlox Event" loading="lazy" /></div>`
-            ).join('');
-            dotsEl.innerHTML = carouselPhotos.map((_, i) =>
-              `<div class="carousel-dot ${i===0?'active':''}" onclick="goToSlide(${i})"></div>`
-            ).join('');
-            goToSlide(0); // reset posisi
-          }
-        }
-
-        // Load foto Titin
-        const { data: titinPhotos } = await sb.from('photos')
-          .select('*').eq('section', 'titin')
-          .order('created_at', { ascending: false }).limit(1);
-
-        if (titinPhotos && titinPhotos.length > 0) {
-          const frame = document.querySelector('.girl-photo-frame');
-          if (frame) {
-            frame.innerHTML = `<img src="${titinPhotos[0].url}" alt="Titin Prapmika" />`;
-          }
-        }
-      } catch(e) {
-        // Gagal load → tetap tampilkan placeholder
-        console.warn('CMS photo loader:', e.message);
+      function applyCarousel(photos) {
+        const track  = document.getElementById('carouselTrack');
+        const dotsEl = document.getElementById('carouselDots');
+        if (!track || !dotsEl || !photos.length) return;
+        track.innerHTML = photos.map(p =>
+          `<div class="carousel-slide"><img src="${p.url}" alt="Univlox Event" loading="lazy" /></div>`
+        ).join('');
+        dotsEl.innerHTML = photos.map((_, i) =>
+          `<div class="carousel-dot ${i===0?'active':''}" onclick="goToSlide(${i})"></div>`
+        ).join('');
+        goToSlide(0);
       }
+
+      function applyTitin(url) {
+        const frame = document.querySelector('.girl-photo-frame');
+        if (frame && url) frame.innerHTML = `<img src="${url}" alt="Titin Prapmika" />`;
+      }
+
+      // 1. Tampilkan dari cache dulu (instan, tidak ada flash placeholder)
+      try {
+        const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+        if (cached) {
+          if (cached.carousel?.length) applyCarousel(cached.carousel);
+          if (cached.titin)            applyTitin(cached.titin);
+        }
+      } catch(e) {}
+
+      // 2. Fetch dari Supabase di background, update cache + tampilan
+      (async function() {
+        try {
+          const sb = supabase.createClient(CMS_SUPABASE_URL, CMS_SUPABASE_ANON_KEY);
+
+          const { data: carouselPhotos } = await sb.from('photos')
+            .select('*').eq('section', 'carousel')
+            .order('display_order', { ascending: true });
+
+          const { data: titinPhotos } = await sb.from('photos')
+            .select('*').eq('section', 'titin')
+            .order('created_at', { ascending: false }).limit(1);
+
+          const titinUrl = titinPhotos?.[0]?.url || null;
+
+          // Update tampilan
+          if (carouselPhotos?.length) applyCarousel(carouselPhotos);
+          if (titinUrl)               applyTitin(titinUrl);
+
+          // Simpan ke cache untuk load berikutnya
+          localStorage.setItem(CACHE_KEY, JSON.stringify({
+            carousel: carouselPhotos || [],
+            titin: titinUrl
+          }));
+        } catch(e) {
+          console.warn('CMS photo loader:', e.message);
+        }
+      })();
     })();
   </script>
 </body>
