@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     /* ── RESET & BASE ──────────────────────────────────── */
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -507,7 +508,13 @@
     .girl-content .girl-name {
       font-size: clamp(2rem, 4vw, 2.8rem);
       font-weight: 700; line-height: 1.1; letter-spacing: -.02em;
-      margin-bottom: .5rem; margin-top: .8rem;
+      margin-bottom: .3rem; margin-top: .8rem;
+    }
+    .girl-ceo {
+      font-size: .95rem; font-weight: 600; letter-spacing: .08em;
+      text-transform: uppercase;
+      background: var(--grad-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 1.2rem;
     }
     .girl-content .girl-tagline {
       font-size: 1rem; color: var(--muted); line-height: 1.7;
@@ -1130,31 +1137,41 @@
       transform: translateY(-2px);
     }
 
-    .contact-form { display: flex; flex-direction: column; gap: 1.2rem; }
-    .form-group { display: flex; flex-direction: column; gap: .4rem; }
-    .form-group label { font-size: .85rem; color: var(--muted); }
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
+    /* ── WA CTA BLOCK ─────────────────────────────────── */
+    .wa-cta-block {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: .85rem 1rem;
-      color: var(--text);
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: .95rem;
-      transition: border-color .2s, box-shadow .2s;
-      outline: none;
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
+      display: flex; flex-direction: column; align-items: center;
+      text-align: center; gap: 1.2rem;
+      position: relative; overflow: hidden;
     }
-    .form-group input:focus,
-    .form-group select:focus,
-    .form-group textarea:focus {
-      border-color: var(--purple);
-      box-shadow: 0 0 0 3px rgba(124,58,237,.15);
+    .wa-cta-block::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(37,211,102,.08) 0%, transparent 65%);
+      pointer-events: none;
     }
-    .form-group select option { background: var(--surface); color: var(--text); }
-    .form-group textarea { resize: vertical; min-height: 120px; }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+    .wa-cta-icon {
+      width: 90px; height: 90px; border-radius: 50%;
+      background: linear-gradient(135deg, #25d366, #128c7e);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 8px 32px rgba(37,211,102,.35);
+    }
+    .wa-cta-title { font-size: clamp(1.4rem, 3vw, 1.8rem); font-weight: 700; }
+    .wa-cta-desc { color: var(--muted); font-size: .97rem; max-width: 380px; line-height: 1.6; }
+    .wa-cta-desc strong { color: var(--text); }
+    .wa-cta-points { display: flex; flex-direction: column; gap: .5rem; text-align: left; width: 100%; max-width: 340px; }
+    .wa-point { font-size: .93rem; color: var(--muted); }
+    .wa-cta-btn {
+      width: 100%; max-width: 340px; justify-content: center;
+      background: linear-gradient(135deg, #25d366, #128c7e) !important;
+      border-color: transparent !important;
+      font-size: 1.05rem; padding: .95rem 1.5rem;
+      gap: .6rem;
+    }
+    .wa-cta-btn:hover { box-shadow: 0 8px 32px rgba(37,211,102,.4) !important; }
+    .wa-cta-note { font-size: .82rem; color: var(--muted); }
 
     /* ── FOOTER ────────────────────────────────────────── */
     footer {
@@ -1267,7 +1284,6 @@
 
       /* Contact */
       .contact-grid { grid-template-columns: 1fr; gap: 2.5rem; }
-      .form-row { grid-template-columns: 1fr; }
       .contact-social { flex-wrap: wrap; }
 
       /* Footer */
@@ -1721,37 +1737,31 @@
         <div class="girl-content">
           <div class="tag reveal">The Girl Behind</div>
           <h2 class="girl-name reveal reveal-delay-1">Titin Prapmika</h2>
+          <p class="girl-ceo reveal reveal-delay-1">CEO of Univlox</p>
           <p class="girl-tagline reveal reveal-delay-2">
             Perempuan di balik setiap event Univlox yang berhasil. Dengan perjalanan panjang di dunia hiburan dan event sejak 2010, Titin membawa energi, pengalaman, dan dedikasi ke setiap project yang ia pegang.
           </p>
-
-          <div class="girl-roles reveal reveal-delay-2">
-            <div class="girl-role-pill"><span>🎤</span> MC Profesional</div>
-            <div class="girl-role-pill"><span>📻</span> Penyiar Radio</div>
-            <div class="girl-role-pill"><span>🎉</span> Event Organizer</div>
-            <div class="girl-role-pill"><span>💍</span> Wedding Organizer</div>
-          </div>
 
           <div class="girl-timeline reveal reveal-delay-3">
             <div class="girl-timeline-item">
               <div class="girl-timeline-icon">🎤</div>
               <div>
-                <div class="girl-timeline-title">MC Berpengalaman</div>
-                <div class="girl-timeline-desc">Memandu ratusan acara — dari corporate event, gala dinner, peluncuran produk, hingga konser musik berskala besar sejak 2010.</div>
+                <div class="girl-timeline-title">MC Profesional</div>
+                <div class="girl-timeline-desc">Memandu ratusan acara — corporate event, gala dinner, peluncuran produk, hingga konser berskala besar sejak 2010.</div>
               </div>
             </div>
             <div class="girl-timeline-item">
               <div class="girl-timeline-icon">📻</div>
               <div>
                 <div class="girl-timeline-title">Penyiar Radio</div>
-                <div class="girl-timeline-desc">Terlatih berbicara di depan publik dengan artikulasi dan karisma yang kuat — dibangun dari pengalaman di balik mikrofon radio.</div>
+                <div class="girl-timeline-desc">Terlatih berbicara di depan publik dengan artikulasi dan karisma yang kuat dari pengalaman di balik mikrofon radio.</div>
               </div>
             </div>
             <div class="girl-timeline-item">
-              <div class="girl-timeline-icon">💍</div>
+              <div class="girl-timeline-icon">🎉</div>
               <div>
-                <div class="girl-timeline-title">Wedding & Event Organizer</div>
-                <div class="girl-timeline-desc">Mengelola pernikahan dan berbagai event dengan sentuhan personal yang memastikan setiap detail terasa spesial dan berkesan.</div>
+                <div class="girl-timeline-title">Event & Wedding Organizer</div>
+                <div class="girl-timeline-desc">Mengelola berbagai skala event — dari pernikahan intim hingga festival besar — dengan sentuhan personal yang berkesan.</div>
               </div>
             </div>
           </div>
@@ -2170,93 +2180,52 @@
           <div class="contact-item">
             <div class="contact-icon">📍</div>
             <div>
-              <div class="contact-item-label">Lokasi</div>
-              <div class="contact-item-value">Bali, Indonesia</div>
+              <div class="contact-item-label">Alamat</div>
+              <div class="contact-item-value">Jl. Bunut Sari, Gang Janji No.7, Bali</div>
             </div>
           </div>
           <div class="contact-item">
             <div class="contact-icon">📧</div>
             <div>
               <div class="contact-item-label">Email</div>
-              <div class="contact-item-value">hello@univlox.com</div>
+              <div class="contact-item-value">univloxmedia@gmail.com</div>
             </div>
           </div>
-          <!-- Inline WA CTA -->
-          <a href="https://wa.me/6281916101107" target="_blank" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:.5rem; font-size:.95rem;">
-            💬 Chat Langsung via WhatsApp
-          </a>
-          <p style="font-size:.75rem; color:var(--muted); text-align:center; margin-top:.5rem;">Respon rata-rata &lt; 1 jam kerja</p>
           <div class="contact-item">
             <div class="contact-icon">📱</div>
             <div>
               <div class="contact-item-label">WhatsApp</div>
-              <div class="contact-item-value">
-                <a href="https://wa.me/6281916101107" target="_blank" style="color:inherit; text-decoration:none;">+62 819-1610-1107</a>
-              </div>
-            </div>
-          </div>
-          <div class="contact-item">
-            <div class="contact-icon">🕐</div>
-            <div>
-              <div class="contact-item-label">Jam Kerja</div>
-              <div class="contact-item-value">Senin – Sabtu, 09:00 – 18:00 WITA</div>
+              <div class="contact-item-value">+62 819-1610-1107</div>
             </div>
           </div>
           <div class="contact-social">
-            <a href="#" class="social-btn" title="Instagram">📸</a>
-            <a href="#" class="social-btn" title="TikTok">🎵</a>
-            <a href="#" class="social-btn" title="LinkedIn">💼</a>
-            <a href="#" class="social-btn" title="YouTube">▶️</a>
+            <a href="https://instagram.com/univloxlive" target="_blank" class="social-btn" title="Instagram @univloxlive" style="display:flex; align-items:center; gap:.5rem; padding:.6rem 1rem; border-radius:12px; width:auto;">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20" style="flex-shrink:0">
+                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+              </svg>
+              <span style="font-size:.9rem; font-weight:500;">@univloxlive</span>
+            </a>
           </div>
         </div>
         <div class="reveal reveal-delay-2">
-          <form class="contact-form" id="contactForm">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Nama Lengkap *</label>
-                <input type="text" placeholder="Nama kamu" required />
-              </div>
-              <div class="form-group">
-                <label>Nomor WhatsApp *</label>
-                <input type="tel" placeholder="+62 812 ..." required />
-              </div>
+          <div class="wa-cta-block">
+            <div class="wa-cta-icon">
+              <svg viewBox="0 0 24 24" fill="white" width="52" height="52">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+              </svg>
             </div>
-            <div class="form-group">
-              <label>Email</label>
-              <input type="email" placeholder="email@kamu.com" />
+            <h3 class="wa-cta-title">Langsung Chat, Lebih Cepat</h3>
+            <p class="wa-cta-desc">Ceritakan event kamu lewat WhatsApp — kami bantu dari konsep sampai eksekusi. Respon dalam <strong>&lt; 1 jam kerja</strong>.</p>
+            <div class="wa-cta-points">
+              <div class="wa-point">✅ Konsultasi gratis, tanpa komitmen</div>
+              <div class="wa-point">✅ Dapat proposal & estimasi budget</div>
+              <div class="wa-point">✅ Tim berpengalaman siap bantu</div>
             </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Jenis Event *</label>
-                <select required>
-                  <option value="">Pilih jenis event</option>
-                  <option>Music Event / Konser</option>
-                  <option>Corporate Event</option>
-                  <option>Brand Activation</option>
-                  <option>Festival</option>
-                  <option>Mall / Venue Event</option>
-                  <option>Lainnya</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>Estimasi Budget</label>
-                <select>
-                  <option value="">Pilih range budget</option>
-                  <option>&lt; Rp 50 Juta</option>
-                  <option>Rp 50 – 200 Juta</option>
-                  <option>Rp 200 Juta – 1 Miliar</option>
-                  <option>&gt; Rp 1 Miliar</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-group">
-              <label>Ceritakan Event Kamu</label>
-              <textarea placeholder="Gambaran singkat event, tanggal estimasi, lokasi, dan kebutuhan khusus lainnya..."></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">
-              Kirim Pesan →
-            </button>
-          </form>
+            <a href="https://wa.me/6281916101107?text=Halo%20Univlox!%20Saya%20ingin%20konsultasi%20event." target="_blank" class="btn btn-primary wa-cta-btn">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20" style="flex-shrink:0"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              Chat WhatsApp Sekarang
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -2498,22 +2467,22 @@
     (function() {
       const carousel = document.getElementById('aboutCarousel');
       if (!carousel) return;
-      const track  = document.getElementById('carouselTrack');
-      const dots   = document.querySelectorAll('#carouselDots .carousel-dot');
-      let current  = 0;
-      let startX   = 0;
-      let isDragging = false;
-      const total = track ? track.children.length : 0;
+      const track = document.getElementById('carouselTrack');
+      let current = 0, startX = 0, isDragging = false;
+
+      function getTotal() { return track ? track.children.length : 0; }
+      function getDots()  { return document.querySelectorAll('#carouselDots .carousel-dot'); }
 
       window.goToSlide = function(idx) {
-        current = (idx + total) % total;
+        const total = getTotal();
+        if (total === 0) return;
+        current = ((idx % total) + total) % total;
         track.style.transform = `translateX(-${current * 100}%)`;
-        dots.forEach((d, i) => d.classList.toggle('active', i === current));
+        getDots().forEach((d, i) => d.classList.toggle('active', i === current));
       };
       window.nextSlide = function() { goToSlide(current + 1); };
       window.prevSlide = function() { goToSlide(current - 1); };
 
-      // Touch / mouse swipe
       carousel.addEventListener('touchstart', e => { startX = e.touches[0].clientX; isDragging = true; }, { passive: true });
       carousel.addEventListener('touchend', e => {
         if (!isDragging) return; isDragging = false;
@@ -2521,7 +2490,6 @@
         if (Math.abs(diff) > 40) diff > 0 ? nextSlide() : prevSlide();
       });
 
-      // Auto-advance every 4 s
       setInterval(() => { if (document.visibilityState === 'visible') nextSlide(); }, 4000);
     })();
 
@@ -2558,6 +2526,54 @@
         }
       });
     });
+
+    // ── CMS PHOTO LOADER ───────────────────────────────
+    // Setelah setup Supabase di admin.html, isi juga nilai di bawah ini
+    // agar foto yang diupload lewat admin langsung tampil di website.
+    (async function loadCMSPhotos() {
+      const CMS_SUPABASE_URL      = 'https://kjdtawflhymxmnauvimb.supabase.co';
+      const CMS_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqZHRhd2ZsaHlteG1uYXV2aW1iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwNzE3MjIsImV4cCI6MjA5NjY0NzcyMn0.Brae15jQdjNms54V54F4iFjEKn3EqZaS30bclkmXv94';
+
+      if (CMS_SUPABASE_URL === 'YOUR_SUPABASE_URL') return; // belum dikonfigurasi, pakai placeholder
+
+      try {
+        const sb = supabase.createClient(CMS_SUPABASE_URL, CMS_SUPABASE_ANON_KEY);
+
+        // Load foto carousel
+        const { data: carouselPhotos } = await sb.from('photos')
+          .select('*').eq('section', 'carousel')
+          .order('display_order', { ascending: true });
+
+        if (carouselPhotos && carouselPhotos.length > 0) {
+          const track     = document.getElementById('carouselTrack');
+          const dotsEl    = document.getElementById('carouselDots');
+          if (track && dotsEl) {
+            track.innerHTML = carouselPhotos.map(p =>
+              `<div class="carousel-slide"><img src="${p.url}" alt="Univlox Event" loading="lazy" /></div>`
+            ).join('');
+            dotsEl.innerHTML = carouselPhotos.map((_, i) =>
+              `<div class="carousel-dot ${i===0?'active':''}" onclick="goToSlide(${i})"></div>`
+            ).join('');
+            goToSlide(0); // reset posisi
+          }
+        }
+
+        // Load foto Titin
+        const { data: titinPhotos } = await sb.from('photos')
+          .select('*').eq('section', 'titin')
+          .order('created_at', { ascending: false }).limit(1);
+
+        if (titinPhotos && titinPhotos.length > 0) {
+          const frame = document.querySelector('.girl-photo-frame');
+          if (frame) {
+            frame.innerHTML = `<img src="${titinPhotos[0].url}" alt="Titin Prapmika" />`;
+          }
+        }
+      } catch(e) {
+        // Gagal load → tetap tampilkan placeholder
+        console.warn('CMS photo loader:', e.message);
+      }
+    })();
   </script>
 </body>
 </html>

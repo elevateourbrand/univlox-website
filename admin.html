@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Univlox CMS — Admin</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #07070f; --surface: #0f0f1e; --surface2: #13132a;
+      --purple: #7c3aed; --purple-l: #a855f7;
+      --text: #f0eeff; --muted: #8884a8;
+      --border: rgba(124,58,237,0.2);
+      --green: #22c55e; --red: #ef4444; --yellow: #f59e0b;
+    }
+    html, body { height: 100%; }
+    body { font-family: 'Space Grotesk', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ── LOGIN ─────────────────────────────────────────── */
+    #loginPage {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      background:
+        radial-gradient(ellipse at 25% 50%, rgba(124,58,237,.18) 0%, transparent 55%),
+        radial-gradient(ellipse at 75% 50%, rgba(37,99,235,.12) 0%, transparent 55%);
+    }
+    .login-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 2.5rem; width: 100%; max-width: 400px;
+      box-shadow: 0 40px 100px rgba(0,0,0,.55);
+    }
+    .login-logo {
+      font-size: 1.7rem; font-weight: 700; letter-spacing: -.02em;
+      background: linear-gradient(135deg, #7c3aed, #a855f7, #f59e0b);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      margin-bottom: .3rem;
+    }
+    .login-sub { color: var(--muted); font-size: .88rem; margin-bottom: 2rem; }
+    .form-group { margin-bottom: 1.2rem; }
+    .form-group label { display: block; font-size: .83rem; color: var(--muted); margin-bottom: .45rem; font-weight: 500; }
+    .form-group input {
+      width: 100%; padding: .8rem 1rem;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text);
+      font-family: inherit; font-size: .95rem; outline: none;
+      transition: border-color .2s;
+    }
+    .form-group input:focus { border-color: var(--purple-l); }
+    .btn-login {
+      width: 100%; padding: .9rem;
+      background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
+      border: none; border-radius: 10px;
+      color: #fff; font-family: inherit; font-size: 1rem; font-weight: 600;
+      cursor: pointer; transition: opacity .2s;
+      box-shadow: 0 8px 30px rgba(124,58,237,.4);
+    }
+    .btn-login:hover { opacity: .88; }
+    .login-error { color: var(--red); font-size: .85rem; margin-top: .8rem; text-align: center; display: none; }
+
+    /* ── DASHBOARD ─────────────────────────────────────── */
+    #dashboard { display: none; min-height: 100vh; }
+
+    .dash-header {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 20;
+    }
+    .dash-logo {
+      font-size: 1.15rem; font-weight: 700; letter-spacing: -.01em;
+      background: linear-gradient(135deg, #7c3aed, #a855f7, #f59e0b);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .dash-header-right { display: flex; align-items: center; gap: 1rem; }
+    .dash-admin-badge {
+      font-size: .8rem; color: var(--muted);
+      background: rgba(124,58,237,.1);
+      border: 1px solid rgba(124,58,237,.2);
+      border-radius: 20px; padding: .3rem .8rem;
+    }
+    .btn-logout {
+      padding: .4rem .9rem;
+      background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.25);
+      border-radius: 8px; color: #f87171;
+      font-family: inherit; font-size: .82rem; cursor: pointer;
+      transition: background .2s;
+    }
+    .btn-logout:hover { background: rgba(239,68,68,.18); }
+
+    /* Page view link */
+    .btn-view-site {
+      padding: .4rem .9rem;
+      background: rgba(34,197,94,.08); border: 1px solid rgba(34,197,94,.25);
+      border-radius: 8px; color: #4ade80;
+      font-size: .82rem; text-decoration: none; font-weight: 500;
+      transition: background .2s;
+    }
+    .btn-view-site:hover { background: rgba(34,197,94,.18); }
+
+    .dash-main { padding: 2rem; max-width: 960px; margin: 0 auto; }
+
+    /* Setup Banner */
+    .setup-banner {
+      background: rgba(245,158,11,.07); border: 1px solid rgba(245,158,11,.3);
+      border-radius: 14px; padding: 1.3rem 1.6rem; margin-bottom: 1.8rem;
+      font-size: .88rem; line-height: 1.7;
+    }
+    .setup-banner h3 { color: #fde68a; margin-bottom: .6rem; font-size: .95rem; }
+    .setup-banner ol { padding-left: 1.2rem; }
+    .setup-banner li { margin-bottom: .35rem; }
+    .setup-banner code {
+      background: rgba(245,158,11,.15); padding: .1rem .45rem;
+      border-radius: 4px; font-family: monospace; font-size: .82rem; color: #fde68a;
+    }
+    .setup-banner a { color: #a78bfa; }
+
+    /* CMS sections */
+    .dash-section {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 18px; padding: 1.8rem; margin-bottom: 1.5rem;
+    }
+    .dash-section-header {
+      display: flex; align-items: flex-start; gap: .9rem; margin-bottom: 1.6rem;
+    }
+    .section-icon {
+      width: 44px; height: 44px; flex-shrink: 0; border-radius: 12px;
+      background: rgba(124,58,237,.14); border: 1px solid rgba(124,58,237,.25);
+      display: flex; align-items: center; justify-content: center; font-size: 1.25rem;
+    }
+    .section-meta { flex: 1; }
+    .section-title { font-size: 1.05rem; font-weight: 600; margin-bottom: .2rem; }
+    .section-desc { font-size: .82rem; color: var(--muted); line-height: 1.5; }
+    .section-badge {
+      flex-shrink: 0; font-size: .75rem; color: var(--purple-l);
+      background: rgba(124,58,237,.12); border: 1px solid rgba(124,58,237,.2);
+      border-radius: 20px; padding: .25rem .75rem; margin-top: .2rem;
+    }
+
+    /* Drop zone */
+    .drop-zone {
+      position: relative;
+      border: 2px dashed rgba(124,58,237,.35); border-radius: 14px;
+      padding: 2rem 1.5rem; text-align: center;
+      cursor: pointer; transition: all .25s;
+      background: rgba(124,58,237,.03);
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: var(--purple-l); background: rgba(124,58,237,.08);
+    }
+    .drop-zone input[type=file] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .drop-icon { font-size: 2.2rem; margin-bottom: .5rem; line-height: 1; }
+    .drop-text { font-size: .9rem; color: var(--muted); line-height: 1.6; }
+    .drop-text strong { color: var(--purple-l); }
+    .drop-hint { font-size: .76rem; color: var(--muted); margin-top: .4rem; opacity: .7; }
+
+    /* Progress */
+    .upload-progress { margin-top: .9rem; display: none; }
+    .progress-bar { height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+    .progress-fill {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, #7c3aed, #a855f7);
+      border-radius: 2px; transition: width .3s;
+    }
+    .progress-label { font-size: .78rem; color: var(--muted); margin-top: .4rem; }
+
+    /* Photo grid */
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: .75rem; margin-top: 1.2rem;
+    }
+    .photo-item {
+      position: relative; border-radius: 10px; overflow: hidden;
+      aspect-ratio: 4/5; border: 1px solid var(--border);
+      background: var(--surface2);
+    }
+    .photo-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .photo-btn-del {
+      position: absolute; top: .4rem; right: .4rem;
+      width: 28px; height: 28px; border-radius: 50%;
+      background: rgba(7,7,15,.75); backdrop-filter: blur(6px);
+      border: 1px solid rgba(239,68,68,.4);
+      color: #f87171; font-size: 1rem; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background .2s;
+    }
+    .photo-btn-del:hover { background: rgba(239,68,68,.35); }
+    .photo-label {
+      position: absolute; bottom: .4rem; left: .4rem;
+      background: rgba(7,7,15,.7); backdrop-filter: blur(5px);
+      border-radius: 5px; padding: .18rem .45rem;
+      font-size: .7rem; color: var(--muted);
+    }
+    .no-photo {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: .5rem; padding: 1rem; color: var(--muted); font-size: .82rem;
+      border: 1px dashed rgba(124,58,237,.2); border-radius: 10px;
+      margin-top: 1.2rem;
+    }
+    .no-photo-icon { font-size: 1.5rem; opacity: .4; }
+
+    /* Titin section */
+    .titin-wrap { display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: flex-start; }
+    .titin-preview-box {
+      width: 150px; flex-shrink: 0;
+      aspect-ratio: 3/4; border-radius: 12px; overflow: hidden;
+      border: 1px solid var(--border); background: var(--surface2);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--muted); font-size: .8rem; text-align: center;
+      padding: .5rem;
+    }
+    .titin-preview-box img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .titin-drop-col { flex: 1; min-width: 200px; }
+    .btn-delete-single {
+      margin-top: .75rem; padding: .45rem 1rem;
+      background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.25);
+      border-radius: 8px; color: #f87171;
+      font-family: inherit; font-size: .82rem; cursor: pointer;
+      transition: background .2s;
+    }
+    .btn-delete-single:hover { background: rgba(239,68,68,.2); }
+
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 999;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: .85rem 1.4rem;
+      font-size: .9rem; font-weight: 500;
+      box-shadow: 0 20px 50px rgba(0,0,0,.4);
+      transform: translateY(20px) scale(.97); opacity: 0;
+      transition: all .3s cubic-bezier(.4,0,.2,1);
+      max-width: 300px;
+    }
+    #toast.show { transform: translateY(0) scale(1); opacity: 1; }
+    #toast.success { border-color: rgba(34,197,94,.35); color: #4ade80; }
+    #toast.error   { border-color: rgba(239,68,68,.35); color: #f87171; }
+    #toast.info    { border-color: rgba(124,58,237,.35); color: var(--purple-l); }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .dash-main { padding: 1rem; }
+      .dash-section { padding: 1.2rem; }
+      .dash-header { padding: .9rem 1rem; }
+      .titin-wrap { flex-direction: column; }
+      .titin-preview-box { width: 100%; aspect-ratio: 16/9; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ LOGIN ══════════════ -->
+<div id="loginPage">
+  <div class="login-card">
+    <div class="login-logo">UNIVLOX</div>
+    <p class="login-sub">CMS Admin Panel — Manajemen Foto</p>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="admin@univlox.com" autocomplete="email" />
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+    <button class="btn-login" onclick="doLogin()">Masuk ke CMS →</button>
+    <p class="login-error" id="loginError">Email atau password salah.</p>
+  </div>
+</div>
+
+<!-- ══════════════ DASHBOARD ══════════════ -->
+<div id="dashboard">
+  <header class="dash-header">
+    <div class="dash-logo">UNIVLOX CMS</div>
+    <div class="dash-header-right">
+      <a href="index.html" target="_blank" class="btn-view-site">🌐 Lihat Website</a>
+      <span class="dash-admin-badge" id="adminLabel"></span>
+      <button class="btn-logout" onclick="doLogout()">Logout</button>
+    </div>
+  </header>
+
+  <div class="dash-main">
+
+    <!-- Setup banner (hilang otomatis kalau sudah dikonfigurasi) -->
+    <div class="setup-banner" id="setupBanner">
+      <h3>⚙️ Setup Supabase diperlukan</h3>
+      <ol>
+        <li>Buat akun gratis di <a href="https://supabase.com" target="_blank">supabase.com</a></li>
+        <li>Buat project baru → pergi ke <strong>Settings → API</strong></li>
+        <li>Copy <strong>Project URL</strong> dan <strong>anon public key</strong></li>
+        <li>Buka file <code>admin.html</code>, cari bagian <code>⚙️ CONFIG</code>, isi <code>SUPABASE_URL</code> dan <code>SUPABASE_ANON_KEY</code></li>
+        <li>Buat tabel & storage bucket dengan SQL di komentar dalam file ini</li>
+        <li>Lakukan hal yang sama di <code>index.html</code> bagian <code>CMS_SUPABASE_URL</code></li>
+      </ol>
+    </div>
+
+    <!-- ── SECTION 1: Foto Carousel ── -->
+    <div class="dash-section">
+      <div class="dash-section-header">
+        <div class="section-icon">🖼️</div>
+        <div class="section-meta">
+          <div class="section-title">Foto Carousel — About Section</div>
+          <div class="section-desc">Foto-foto yang bisa di-swipe di bagian About website. Bisa upload banyak sekaligus.</div>
+        </div>
+        <div class="section-badge" id="carouselCount">0 foto</div>
+      </div>
+
+      <div class="drop-zone" id="carouselDrop">
+        <input type="file" accept="image/*" multiple id="carouselInput" onchange="handleUpload(this.files, 'carousel')" />
+        <div class="drop-icon">📸</div>
+        <div class="drop-text"><strong>Drag & drop foto di sini</strong><br>atau klik untuk pilih dari galeri</div>
+        <div class="drop-hint">JPG, PNG, WebP · Bisa pilih banyak foto sekaligus</div>
+      </div>
+      <div class="upload-progress" id="carouselProgress">
+        <div class="progress-bar"><div class="progress-fill" id="carouselFill"></div></div>
+        <div class="progress-label" id="carouselStatus">Mengupload...</div>
+      </div>
+      <div id="carouselGrid"></div>
+    </div>
+
+    <!-- ── SECTION 2: Foto Titin ── -->
+    <div class="dash-section">
+      <div class="dash-section-header">
+        <div class="section-icon">👤</div>
+        <div class="section-meta">
+          <div class="section-title">Foto Titin Prapmika</div>
+          <div class="section-desc">Foto profil di bagian "The Girl Behind Univlox".</div>
+        </div>
+      </div>
+      <div class="titin-wrap">
+        <div class="titin-preview-box" id="titinPreview">Belum ada foto</div>
+        <div class="titin-drop-col">
+          <div class="drop-zone" id="titinDrop">
+            <input type="file" accept="image/*" id="titinInput" onchange="handleUpload(this.files, 'titin')" />
+            <div class="drop-icon">👤</div>
+            <div class="drop-text"><strong>Upload foto Titin</strong><br>Foto lama akan diganti otomatis</div>
+            <div class="drop-hint">Disarankan foto portrait (3:4) dengan resolusi tinggi</div>
+          </div>
+          <div class="upload-progress" id="titinProgress">
+            <div class="progress-bar"><div class="progress-fill" id="titinFill"></div></div>
+            <div class="progress-label" id="titinStatus">Mengupload...</div>
+          </div>
+          <button class="btn-delete-single" onclick="deleteSection('titin')">🗑 Hapus Foto Titin</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /dash-main -->
+</div><!-- /dashboard -->
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  ⚙️  CONFIG — ISI NILAI DI BAWAH INI
+// ════════════════════════════════════════════════════════
+//
+//  LANGKAH SETUP SUPABASE:
+//  1. Daftar gratis di https://supabase.com
+//  2. Buat project baru (pilih region Asia Singapore)
+//  3. Settings → API → copy Project URL & anon key
+//  4. Isi SUPABASE_URL dan SUPABASE_ANON_KEY di bawah
+//
+//  SETUP TABEL (jalankan di Supabase → SQL Editor):
+//  ─────────────────────────────────────────────────
+//  CREATE TABLE photos (
+//    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+//    section TEXT NOT NULL,
+//    url TEXT NOT NULL,
+//    display_order INTEGER DEFAULT 0,
+//    created_at TIMESTAMPTZ DEFAULT NOW()
+//  );
+//  ALTER TABLE photos ENABLE ROW LEVEL SECURITY;
+//  CREATE POLICY "allow_all" ON photos
+//    USING (true) WITH CHECK (true);
+//
+//  SETUP STORAGE BUCKET:
+//  ─────────────────────────────────────────────────
+//  1. Pergi ke Storage → Create bucket
+//  2. Nama bucket: photos
+//  3. Centang "Public bucket" → Save
+//  4. Klik bucket "photos" → Policies → New policy
+//  5. Pilih "Full access" untuk anon → Save
+//
+//  GANTI JUGA di index.html bagian CMS_SUPABASE_URL!
+// ════════════════════════════════════════════════════════
+
+const SUPABASE_URL      = 'https://kjdtawflhymxmnauvimb.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqZHRhd2ZsaHlteG1uYXV2aW1iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwNzE3MjIsImV4cCI6MjA5NjY0NzcyMn0.Brae15jQdjNms54V54F4iFjEKn3EqZaS30bclkmXv94';
+const ADMIN_EMAIL       = 'hello@univlox.com';       // ← ganti email login kamu
+const ADMIN_PASS        = 'univlox2024';             // ← ganti password kamu
+
+// ════════════════════════════════════════════════════════
+
+const configured = SUPABASE_URL !== 'YOUR_SUPABASE_URL';
+let sb = null;
+
+if (configured) {
+  sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  document.getElementById('setupBanner').style.display = 'none';
+}
+
+// ── AUTH ──────────────────────────────────────────────
+function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value;
+  const err   = document.getElementById('loginError');
+  if (email === ADMIN_EMAIL && pass === ADMIN_PASS) {
+    sessionStorage.setItem('cms_auth', '1');
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    document.getElementById('adminLabel').textContent = '👤 ' + email;
+    if (configured) loadAll();
+    else showToast('Konfigurasi Supabase dulu ya!', 'info');
+  } else {
+    err.style.display = 'block';
+    setTimeout(() => err.style.display = 'none', 3000);
+  }
+}
+
+function doLogout() {
+  sessionStorage.removeItem('cms_auth');
+  location.reload();
+}
+
+// Auto-login kalau session aktif
+if (sessionStorage.getItem('cms_auth') === '1') {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  document.getElementById('adminLabel').textContent = '👤 ' + ADMIN_EMAIL;
+  if (configured) loadAll();
+}
+
+document.getElementById('loginPass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+// ── LOAD ──────────────────────────────────────────────
+async function loadAll() {
+  await loadCarousel();
+  await loadTitin();
+}
+
+async function loadCarousel() {
+  if (!sb) return;
+  const { data, error } = await sb.from('photos')
+    .select('*').eq('section', 'carousel')
+    .order('display_order', { ascending: true });
+  if (error) { showToast('Gagal load foto carousel', 'error'); return; }
+  renderCarousel(data || []);
+}
+
+function renderCarousel(photos) {
+  const grid  = document.getElementById('carouselGrid');
+  const count = document.getElementById('carouselCount');
+  count.textContent = photos.length + ' foto';
+
+  if (photos.length === 0) {
+    grid.innerHTML = `<div class="no-photo"><div class="no-photo-icon">📭</div>Belum ada foto carousel. Upload foto di atas.</div>`;
+    return;
+  }
+
+  grid.innerHTML = `<div class="photo-grid" id="carouselPhotoGrid"></div>`;
+  const pg = document.getElementById('carouselPhotoGrid');
+  photos.forEach((p, i) => {
+    const div = document.createElement('div');
+    div.className = 'photo-item';
+    div.innerHTML = `
+      <img src="${p.url}" alt="Foto ${i+1}" loading="lazy" />
+      <div class="photo-label">#${i+1}</div>
+      <button class="photo-btn-del" onclick="deleteCarouselPhoto('${p.id}', '${p.url}')" title="Hapus foto ini">✕</button>
+    `;
+    pg.appendChild(div);
+  });
+}
+
+async function loadTitin() {
+  if (!sb) return;
+  const { data } = await sb.from('photos')
+    .select('*').eq('section', 'titin')
+    .order('created_at', { ascending: false }).limit(1);
+  if (data && data.length > 0) renderTitin(data[0].url);
+}
+
+function renderTitin(url) {
+  const box = document.getElementById('titinPreview');
+  box.innerHTML = `<img src="${url}" alt="Titin Prapmika" />`;
+}
+
+// ── UPLOAD ────────────────────────────────────────────
+async function handleUpload(files, section) {
+  files = Array.from(files);
+  if (!files.length) return;
+  if (!sb) { showToast('Setup Supabase dulu!', 'error'); return; }
+
+  const progEl   = document.getElementById(section + 'Progress');
+  const fillEl   = document.getElementById(section + 'Fill');
+  const statusEl = document.getElementById(section + 'Status');
+  progEl.style.display = 'block';
+  fillEl.style.width = '0%';
+
+  let done = 0;
+  for (const file of files) {
+    const ext  = file.name.split('.').pop().toLowerCase();
+    const name = `${section}_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+    statusEl.textContent = `Mengupload ${file.name}...`;
+
+    // Upload ke Supabase Storage
+    const { error: storageErr } = await sb.storage.from('photos').upload(name, file, { upsert: false });
+    if (storageErr) { showToast('Upload gagal: ' + storageErr.message, 'error'); continue; }
+
+    // Ambil public URL
+    const { data: { publicUrl } } = sb.storage.from('photos').getPublicUrl(name);
+
+    // Kalau Titin, hapus foto lama dulu
+    if (section === 'titin') await sb.from('photos').delete().eq('section', 'titin');
+
+    // Simpan ke database
+    const { error: dbErr } = await sb.from('photos').insert({
+      section, url: publicUrl, display_order: done
+    });
+    if (dbErr) { showToast('Gagal simpan ke database', 'error'); continue; }
+
+    done++;
+    fillEl.style.width = (done / files.length * 100) + '%';
+  }
+
+  showToast(`✅ ${done} foto berhasil diupload!`, 'success');
+  statusEl.textContent = 'Selesai!';
+  setTimeout(() => { progEl.style.display = 'none'; }, 2500);
+
+  // Reset input file
+  document.getElementById(section + 'Input').value = '';
+
+  if (section === 'carousel') await loadCarousel();
+  if (section === 'titin')    await loadTitin();
+}
+
+// ── DELETE ────────────────────────────────────────────
+async function deleteCarouselPhoto(id, url) {
+  if (!sb) return;
+  if (!confirm('Hapus foto ini dari carousel?')) return;
+
+  // Hapus dari database
+  const { error } = await sb.from('photos').delete().eq('id', id);
+  if (error) { showToast('Gagal hapus', 'error'); return; }
+
+  // Hapus dari storage (extract filename dari URL)
+  try {
+    const path = url.split('/photos/')[1];
+    if (path) await sb.storage.from('photos').remove([path]);
+  } catch(e) {}
+
+  showToast('Foto dihapus', 'success');
+  await loadCarousel();
+}
+
+async function deleteSection(section) {
+  if (!sb) return;
+  if (!confirm('Hapus foto ' + section + '?')) return;
+  await sb.from('photos').delete().eq('section', section);
+  showToast('Foto dihapus', 'success');
+  if (section === 'titin') {
+    document.getElementById('titinPreview').textContent = 'Belum ada foto';
+  }
+}
+
+// ── DRAG & DROP ───────────────────────────────────────
+['carouselDrop', 'titinDrop'].forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag-over'); });
+  el.addEventListener('dragleave', e => { if (!el.contains(e.relatedTarget)) el.classList.remove('drag-over'); });
+  el.addEventListener('drop', e => {
+    e.preventDefault(); el.classList.remove('drag-over');
+    const section = id === 'carouselDrop' ? 'carousel' : 'titin';
+    handleUpload(e.dataTransfer.files, section);
+  });
+});
+
+// ── TOAST ─────────────────────────────────────────────
+let toastTimer;
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = ''; }, 3500);
+}
+</script>
+</body>
+</html>
